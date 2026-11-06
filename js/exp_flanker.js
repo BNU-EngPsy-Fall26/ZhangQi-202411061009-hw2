@@ -11,8 +11,9 @@
 
 const FLK = {
   // 侧翼面孔：男性面孔（2 愤怒 + 2 中性），灰度呈现
-  flankers: { angry: ["../stimuli/faces/AM8.BMP", "../stimuli/faces/AM17.BMP"],
-              neutral: ["../stimuli/faces/NEM104.BMP", "../stimuli/faces/NEM109.BMP"] },
+  // 注意：文件名大小写必须与仓库完全一致（GitHub Pages/Linux 区分大小写）
+  flankers: { angry: ["../stimuli/faces/AM8.BMP", "../stimuli/faces/AM17.bmp"],
+              neutral: ["../stimuli/faces/NEM104.bmp", "../stimuli/faces/NEM109.bmp"] },
   perCell: 10,            // 每 (情绪×一致性×方向) 10 试次 → 80 正式
   practicePerCell: 4,     // 练习 16 试次
   W: 900, H: 300,
@@ -46,7 +47,12 @@ function preloadImages(paths, cb) {
       FLK_STATE.gray[p] = c;
       if (++n === paths.length) cb();
     };
-    img.onerror = () => alert("素材加载失败：" + p);
+    img.onerror = () => {
+      // 大小写回退：Linux 服务器（如 GitHub Pages）区分大小写，先用全小写路径重试
+      const lower = p.toLowerCase();
+      if (lower !== p) img.src = lower;
+      else alert("素材加载失败：" + p);
+    };
     img.src = p; FLK_STATE.images[p] = img;
   });
 }
