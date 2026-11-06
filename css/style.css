@@ -1,0 +1,236 @@
+/* ============================================================
+   注意实验室 · 统一样式
+   风格：温暖 · 立体悬浮 · 卡通黏土质感（Claymorphism）
+   原则：
+   - 界面是实验的"容器"，立体装饰绝不进入刺激画布区
+   - 计时优先：无循环动画、无实时3D渲染，仅静态阴影营造悬浮感
+   ============================================================ */
+:root{
+  --primary:#e8734a;          /* 暖珊瑚橘 */
+  --primary-deep:#c9542e;
+  --primary-soft:#fdeee2;     /* 蜜桃浅底 */
+  --peach:#ffd9b8;
+  --bg:#fbf2e6;               /* 奶油底 */
+  --card:#fffdf8;
+  --text:#4a3f35;             /* 暖深棕 */
+  --text-2:#94887a;           /* 次级文字 */
+  --line:#f0e2d0;
+  --ok:#4c9a6d; --warn:#c97f2e; --err:#d05b4e;
+  --radius:22px;
+  /* 黏土卡片：外层柔影 + 内侧顶部高光，呈膨胀悬浮感 */
+  --clay:0 10px 24px -8px rgba(217,122,64,.26),
+         0 4px 10px -2px rgba(217,122,64,.10),
+         inset 0 2px 0 rgba(255,255,255,.95),
+         inset 0 -2px 4px rgba(217,122,64,.05);
+  /* hover 悬浮加强 */
+  --float:0 20px 40px -12px rgba(217,122,64,.38),
+          0 8px 18px -6px rgba(217,122,64,.16),
+          inset 0 2px 0 rgba(255,255,255,.95);
+  --font:"Inter","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);color:var(--text);
+     font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased;
+     background:
+       radial-gradient(640px 420px at 6% -6%, #ffe9d0 0%, transparent 60%),
+       radial-gradient(720px 520px at 102% -2%, #ffeadb 0%, transparent 55%),
+       radial-gradient(560px 420px at 50% 112%, #fde7d8 0%, transparent 62%),
+       linear-gradient(165deg, #fdf6ea 0%, #fbf0e0 100%);
+     background-attachment:fixed}
+
+/* ---------- 布局：居中主内容区 ---------- */
+.wrap{max-width:920px;margin:0 auto;padding:34px 20px 64px}
+.wrap-wide{max-width:1080px}
+.topbar{position:sticky;top:0;z-index:50;background:rgba(253,246,234,.82);
+        backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar-inner{max-width:1080px;margin:0 auto;padding:12px 20px;display:flex;
+              align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+.brand .logo{width:30px;height:30px;border-radius:11px;
+             background:linear-gradient(180deg,#f79d6a,#e8734a);
+             box-shadow:0 4px 8px -2px rgba(201,84,46,.45),
+                        inset 0 2px 0 rgba(255,255,255,.45),
+                        inset 0 -3px 5px rgba(120,40,10,.20);
+             display:inline-flex;align-items:center;justify-content:center;
+             color:#fff;font-size:14px}
+.nav a{color:var(--text-2);text-decoration:none;margin-left:16px;font-size:14px;
+       transition:color .15s}
+.nav a:hover{color:var(--primary)}
+
+/* ---------- 黏土卡片与软凸起按钮 ---------- */
+.card{background:var(--card);border:1px solid rgba(240,220,192,.7);
+      border-radius:var(--radius);box-shadow:var(--clay);padding:30px 32px;
+      transition:opacity .25s}
+.card+.card{margin-top:26px}
+.card h1{font-size:25px;letter-spacing:.2px;margin-bottom:6px}
+.card h2{font-size:18.5px;margin-bottom:10px}
+.card p{color:#544a3f;margin:8px 0}
+.muted{color:var(--text-2);font-size:13.5px}
+.hero-sub{color:var(--text-2);margin-bottom:0}
+
+.btn{display:inline-block;border:none;cursor:pointer;font-family:var(--font);
+     font-size:15px;font-weight:600;padding:12px 28px;border-radius:16px;
+     color:#fff;background:linear-gradient(180deg,#f58a5f,#e8734a);
+     box-shadow:0 6px 14px -4px rgba(201,84,46,.50),
+                inset 0 2px 0 rgba(255,255,255,.38),
+                inset 0 -4px 6px rgba(120,40,10,.18);
+     transition:transform .15s,box-shadow .15s,filter .15s}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.04);
+           box-shadow:0 10px 20px -6px rgba(201,84,46,.55),
+                      inset 0 2px 0 rgba(255,255,255,.38),
+                      inset 0 -4px 6px rgba(120,40,10,.18)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:none}
+.btn.ghost{background:var(--card);color:var(--primary);
+           border:2px solid #f3b795;
+           box-shadow:0 4px 10px -4px rgba(217,122,64,.25),
+                      inset 0 2px 0 rgba(255,255,255,.9)}
+.btn.gray{background:linear-gradient(180deg,#fdf3e6,#f6e8d5);color:var(--text);
+          border:1px solid var(--line);
+          box-shadow:0 4px 10px -4px rgba(150,110,70,.22),
+                     inset 0 2px 0 rgba(255,255,255,.85)}
+.btn.small{padding:8px 16px;font-size:13.5px;border-radius:13px}
+.btn-row{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;align-items:center}
+
+/* 蜜桃浅底高亮框（指导语重点规则） */
+.callout{background:var(--primary-soft);border:1px solid #f6d4b8;
+         border-radius:16px;padding:15px 18px;margin:14px 0;font-size:14.5px;
+         box-shadow:inset 0 2px 0 rgba(255,255,255,.7)}
+.callout.warn{background:#fdf6e9;border-color:#f2e0bb}
+.callout b{font-weight:650}
+
+/* ---------- 实验选择卡片（悬浮黏土卡） ---------- */
+.grid-exp{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+          gap:26px;margin-top:26px}
+/* 三实验卡片 与 使用说明卡片之间保留约 1cm（38px）间距 */
+.grid-exp+.card{margin-top:38px}
+.exp-card{background:var(--card);border:1px solid rgba(240,220,192,.7);
+          border-radius:var(--radius);padding:24px;box-shadow:var(--clay);
+          text-decoration:none;color:var(--text);display:block;
+          transition:transform .18s,box-shadow .18s;position:relative;overflow:hidden}
+.exp-card::after{content:"";position:absolute;top:0;left:8%;right:8%;height:2px;
+                 border-radius:2px;background:linear-gradient(90deg,transparent,
+                 rgba(255,255,255,.9),transparent)}
+.exp-card:hover{transform:translateY(-5px);box-shadow:var(--float);
+                border-color:#f3c9a8}
+.exp-card .tag{display:inline-block;font-size:12px;font-weight:600;
+               color:var(--primary);background:var(--primary-soft);
+               border-radius:20px;padding:3px 12px;margin-bottom:10px;
+               box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+.exp-card h3{font-size:16.5px;margin-bottom:6px}
+.exp-card p{font-size:13.5px;color:var(--text-2);line-height:1.65;margin:0}
+.exp-card .meta{margin-top:12px;font-size:12.5px;color:#ab9d8c}
+
+/* ---------- 表单 ---------- */
+.field{margin:16px 0}
+.field label{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+.field input[type=text],.field input[type=number],.field input[type=password],.field select{
+  width:100%;max-width:340px;padding:10px 14px;border:1px solid var(--line);
+  border-radius:13px;font-family:var(--font);font-size:15px;background:#fffefb;
+  color:var(--text);box-shadow:inset 0 2px 4px rgba(150,110,70,.08)}
+.field input:focus{outline:2px solid #f6c39a;border-color:var(--primary)}
+.radio-row{display:flex;gap:22px;flex-wrap:wrap;margin:8px 0}
+.radio-row label{display:flex;align-items:center;gap:6px;font-size:14.5px;
+                 cursor:pointer;font-weight:400}
+.radio-row input[type=radio],.radio-row input[type=checkbox]{
+  accent-color:var(--primary);width:16px;height:16px}
+
+/* ---------- 进度条（极细，画布外） ---------- */
+.progress-shell{position:fixed;left:0;top:0;width:100%;height:5px;
+                background:#f2e5d2;z-index:100}
+.progress-bar{height:100%;width:0%;
+              background:linear-gradient(90deg,#f6a56f,var(--primary));
+              border-radius:0 3px 3px 0;transition:width .2s linear}
+.progress-label{position:fixed;top:12px;right:16px;font-size:12px;
+                color:var(--text-2);z-index:100;
+                background:rgba(253,246,234,.85);padding:2px 10px;
+                border-radius:12px}
+
+/* ---------- 实验刺激画布区：零装饰、纯色背景 ---------- */
+.stage{position:fixed;inset:0;background:#101114;display:none;z-index:60;
+       align-items:center;justify-content:center;flex-direction:column}
+.stage.on{display:flex}
+.stage canvas{display:block}
+.stage .fixation{color:#d7dae0;font-size:42px;font-weight:300;letter-spacing:.1em}
+.stage .hint{position:absolute;bottom:18px;left:0;right:0;text-align:center;
+             color:#5c626d;font-size:13px}
+/* C&M 用浅色画布（中性浅灰，干净几何图形） */
+.stage.light{background:#eceae4}
+.stage.light canvas{background:#ffffff}
+
+/* ---------- 页面装饰（温暖黏土几何，静态无动画；永不进入刺激画布） ---------- */
+.deco{position:fixed;z-index:5;pointer-events:none;opacity:.95}
+.deco-tl{top:16px;left:18px}
+.deco-br{bottom:16px;right:18px}
+.deco svg{display:block}
+
+/* ---------- 结果展示 ---------- */
+.table{width:100%;border-collapse:collapse;font-size:14px;margin:12px 0}
+.table th,.table td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line)}
+.table th{font-size:12.5px;color:var(--text-2);background:#fdf7ec}
+.table tr:hover td{background:#fdf6ec}
+.chart-box{background:#fff;border:1px solid rgba(240,220,192,.7);
+           border-radius:18px;padding:18px;margin:14px 0;box-shadow:var(--clay)}
+.chart-box h3{font-size:14.5px;margin-bottom:4px}
+.chart-box canvas{max-width:100%;display:block}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+         gap:16px;margin:16px 0}
+.kpi{background:#fff;border:1px solid rgba(240,220,192,.7);border-radius:18px;
+     padding:16px 18px;box-shadow:var(--clay)}
+.kpi .v{font-size:25px;font-weight:700;color:var(--primary)}
+.kpi .k{font-size:12.5px;color:var(--text-2);margin-top:2px}
+.badge{display:inline-block;font-size:12px;padding:2px 11px;border-radius:20px;
+       box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
+.badge.ok{background:#e6f4ec;color:var(--ok)}
+.badge.err{background:#fdeceb;color:var(--err)}
+.badge.info{background:var(--primary-soft);color:var(--primary)}
+.badge.warn{background:#fdf3e3;color:#9a5b00}
+
+/* ---------- 步骤指示（软圆角胶囊） ---------- */
+.steps{display:flex;gap:8px;margin:18px 0}
+.step{flex:1;padding:9px 6px;text-align:center;font-size:13px;background:#fff;
+     color:var(--text-2);border-radius:14px;border:1px solid var(--line);
+     box-shadow:inset 0 2px 0 rgba(255,255,255,.9)}
+.step.on{background:var(--primary-soft);color:var(--primary);font-weight:650;
+         border-color:#f6cdb0}
+.step.done{color:var(--ok);background:#f2faf5;border-color:#d8eee1}
+
+/* ---------- 淡入淡出转场 ---------- */
+.fade{animation:fadein .28s ease}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+
+/* 眼动校准点（黏土小球） */
+.calib-dot{position:fixed;width:46px;height:46px;margin:-23px 0 0 -23px;
+           border-radius:50%;background:#fff;cursor:pointer;z-index:200;
+           display:none;align-items:center;justify-content:center;
+           font-size:11px;color:#94887a;user-select:none;
+           box-shadow:0 0 0 7px rgba(232,115,74,.22),
+                      0 8px 18px -6px rgba(201,84,46,.5),
+                      inset 0 3px 0 rgba(255,255,255,.95),
+                      inset 0 -3px 5px rgba(180,130,90,.18)}
+.calib-dot.on{display:flex}
+#wg-video{position:fixed;bottom:14px;right:14px;width:160px;border-radius:16px;
+          border:2px solid #fff;box-shadow:0 8px 20px -6px rgba(60,40,20,.45);
+          z-index:90;background:#000}
+#wg-overlay{position:fixed;inset:0;pointer-events:none;z-index:80}
+
+/* ---------- 实测 vs 预期 对比布局 ---------- */
+.cmp-row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;margin:10px 0}
+.cmp-col{flex:1 1 360px;min-width:300px}
+.cmp-tag{display:inline-block;font-size:12.5px;font-weight:700;padding:3px 12px;border-radius:999px;margin-bottom:8px}
+.cmp-tag.real{background:#e6f4ec;color:#1f6f3f;border:1px solid #c4e5d0}
+.cmp-tag.pred{background:#fdf3e3;color:#9a5b00;border:1px solid #f3ddb8}
+.cmp-empty{color:#8a8f98;font-size:13.5px;line-height:1.7;padding:22px 16px;border:1px dashed #e2d8c8;border-radius:14px;text-align:center;margin-top:34px}
+.cmp-col .kpi-row{grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.cmp-col .kpi .v{font-size:19px}
+
+/* 通用工具类 */
+.center{text-align:center}
+.right{text-align:right}
+.mt{margin-top:18px}.mb{margin-bottom:14px}
+code.kbd{background:#fdf3e6;border-radius:8px;padding:1px 8px;font-size:13px;
+         border:1px solid var(--line);box-shadow:inset 0 -2px 0 rgba(200,160,110,.25)}
+ul.tight{margin:6px 0 6px 20px}
+ul.tight li{margin:4px 0}
+@media print{.topbar,.deco,.btn{display:none}}

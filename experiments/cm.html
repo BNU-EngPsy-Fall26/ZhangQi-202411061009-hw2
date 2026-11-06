@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>实验3 · Cleveland & McGill 图形知觉</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <span class="brand"><span class="logo">◎</span>注意实验室 · 实验3 图形知觉层级</span>
+  <span class="nav"><a href="../index.html">返回首页</a><a href="../results.html">结果</a></span>
+</div></div>
+<div class="deco deco-tl" id="deco-tl"></div><div class="deco deco-br" id="deco-br"></div>
+
+<div class="wrap" id="app"></div>
+<div class="progress-shell" id="progress-shell"><div class="progress-bar" id="progress-bar"></div></div>
+<div class="progress-label" id="progress-label"></div>
+
+<script src="../js/config.js"></script>
+<script src="../js/core.js"></script>
+<script src="../js/vendor/webgazer.js"></script>
+<script src="../js/cm_stimuli.js"></script>
+<script src="../js/exp_cm.js"></script>
+<script>$("#deco-tl").innerHTML = DECO_SVG.tl; $("#deco-br").innerHTML = DECO_SVG.br;</script>
+</body>
+</html>

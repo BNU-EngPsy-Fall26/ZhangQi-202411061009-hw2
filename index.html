@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>注意实验室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <span class="brand"><span class="logo">◎</span>注意实验室</span>
+  <span class="nav"><a href="index.html">首页</a><a href="results.html">结果与模型可视化</a></span>
+</div></div>
+
+<div class="deco deco-tl" id="deco-tl"></div>
+<div class="deco deco-br" id="deco-br"></div>
+
+<div class="wrap wrap-wide">
+  <div class="card fade">
+    <h1>注意实验室</h1>
+    <p class="hero-sub">注意实验室是一个在线注意与知觉研究平台，围绕选择性注意、干扰抑制与图形知觉
+    三大主题提供经典实验范式的交互式版本。所有实验均在浏览器中运行，无需安装任何软件。</p>
+    <div class="callout">
+      平台功能：<b>三个独立实验</b> · <b>摄像头眼动记录（本地处理，不上传视频）</b> ·
+      <b>数据自动收集与汇总</b> · <b>结果分析与模型预测可视化</b>。
+      三个实验相互独立，可任意顺序单独完成。
+    </div>
+  </div>
+
+  <div class="grid-exp">
+    <a class="exp-card" href="experiments/ib.html">
+      <span class="tag">选择性注意</span>
+      <h3>专注计数与非注意盲 —— 意外刺激的形象、速度与方向</h3>
+      <p>观看<b>警长队与巫医队</b>在草坪上的传球动画并专注计数。每段动画都会出现一个
+      <b>不同的意外刺激</b>（雨伞 / 手持金币的鹅 / 戴枫叶徽章的鹅），以不同速度、不同方向
+      出现——检验<b>运动速度</b>与<b>刺激相似性</b>如何决定它能否突破专注而被察觉（被试内设计）。</p>
+      <div class="meta">1 段练习 + 6 段正式动画（每段一个意外刺激）· 眼动可选</div>
+    </a>
+    <a class="exp-card" href="experiments/flanker.html">
+      <span class="tag">干扰抑制</span>
+      <h3>情绪侧翼 Flanker —— 干扰项的情绪价效</h3>
+      <p>判断中央箭头的方向，忽略两侧携带方向箭头的<b>愤怒 / 中性面孔</b>，
+      检验愤怒干扰是否比中性干扰更难抑制（2×2 被试内设计）。</p>
+      <div class="meta">练习 + 80 个正式试次 · 眼动可选</div>
+    </a>
+    <a class="exp-card" href="experiments/cm.html">
+      <span class="tag">图形知觉</span>
+      <h3>图形比例知觉 —— 呈现时长 × 编码类型</h3>
+      <p>估计图形中蓝色部分所占的比例（位置 / 长度 / 角度 / 面积四种编码），
+      检验<b>呈现时长压力</b>（500ms / 2s / 无限）下知觉层级的自动性。</p>
+      <div class="meta">练习 + 96 个正式试次 · 滑块作答 · 眼动可选</div>
+    </a>
+  </div>
+
+  <div class="card">
+    <h2>使用说明</h2>
+    <ul class="tight">
+      <li><b>推荐</b>：双击项目根目录的「启动实验.bat」，通过本地 HTTPS 服务器
+      （https://localhost:8765）打开本页面（浏览器只在安全地址下允许摄像头，
+      首次运行若弹出证书确认框请选择「是」）；直接双击 HTML 文件也可浏览，但眼动功能会被浏览器禁用；</li>
+      <li>点击上方任意卡片进入实验，先阅读知情同意，输入匿名编号；</li>
+      <li>建议开启摄像头眼动：视频仅在浏览器本地处理，不上传；如摄像头不可用将自动跳过；</li>
+      <li>请在安静的房间、电脑前完成；手机屏幕过小，建议使用电脑；</li>
+      <li>每个实验先完成练习试次，熟悉按键与流程后再进入正式实验；</li>
+      <li>实验结束后数据自动上传；如上传失败，结束页提供 CSV 导出。</li>
+    </ul>
+  </div>
+</div>
+
+<div class="progress-shell" id="progress-shell" style="display:none"><div class="progress-bar" id="progress-bar"></div></div>
+<div class="progress-label" id="progress-label"></div>
+
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script>
+  $("#deco-tl").innerHTML = DECO_SVG.tl;
+  $("#deco-br").innerHTML = DECO_SVG.br;
+</script>
+</body>
+</html>

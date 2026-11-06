@@ -1,0 +1,8 @@
+# 系统与编辑器杂项（不提交）
+~$*
+Thumbs.db
+.DS_Store
+Desktop.ini
+*.tmp
+*.log
+*.local

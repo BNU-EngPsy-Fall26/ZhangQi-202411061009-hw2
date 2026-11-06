@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>结果与模型可视化 · 注意实验室</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <span class="brand"><span class="logo">◎</span>注意实验室 · 结果与模型可视化</span>
+  <span class="nav"><a href="index.html">首页</a><a href="experiments/ib.html">实验1</a><a href="experiments/flanker.html">实验2</a><a href="experiments/cm.html">实验3</a></span>
+</div></div>
+<div class="deco deco-tl" id="deco-tl"></div><div class="deco deco-br" id="deco-br"></div>
+
+<div class="wrap wrap-wide">
+  <div class="card fade">
+    <h1>结果与模型可视化</h1>
+    <p class="hero-sub">三个实验的<b>实测 vs 预期</b>对比、效应计算与模型预测检验，以及 C&M 人类 vs AI 同题对决面板。
+    <b>未导入真实数据时，各板块显示收数前预注册的预期结果</b>（橙色标签，按预测量级生成的示意数据）；
+    导入真实 CSV / JSON 后自动切换为<b>左实测、右预期</b>并排对比，并对实测数据附显著性检验。</p>
+    <div class="btn-row">
+      <button class="btn" id="btn-import">导入 CSV / JSON 文件</button>
+      <input type="file" id="file-in" accept=".csv,.json" multiple style="display:none">
+      <button class="btn gray" id="btn-fetch-api">从收数接口读取全体被试</button>
+      <span id="data-status"></span>
+    </div>
+  </div>
+
+  <div class="card fade" id="res-report-wrap" style="display:none">
+    <h2>自动分析报告（导入实测数据后生成）</h2>
+    <p class="hero-sub">按<b>收数前预登记的预测</b>逐条自动判定（✓ 支持 / △ 部分支持 / ✗ 不支持），
+    附显著性检验结果；「复制 Markdown」按钮可把填好数字的报告直接粘贴进 README「结果与讨论」。</p>
+    <div id="res-report"></div>
+    <div class="btn-row"><button class="btn ghost" id="btn-copy-md">复制 Markdown 报告文本</button></div>
+  </div>
+
+  <div class="card" id="res-ib-wrap">
+    <h2>实验1 · 非注意盲：意外刺激的形象 × 速度 × 轮次</h2>
+    <p class="muted"><b>自变量</b>：意外刺激形象（雨伞 / 金币鹅 / 枫叶鹅）× 运动速度（快速 400px/s / 慢速 110px/s / 静止）× 轮次（1–6）　
+    <b>因变量</b>：察觉率（觉察二分）＋ 身份 / 鹅特征 / 区域 / 方向迫选正确率　<b>设计</b>：被试内，每人 6 轮（练习段无刺激）　
+    <b>误差条</b> = ±1 标准误（跨被试）</p>
+    <div id="res-ib"></div>
+  </div>
+  <div class="card" id="res-flk-wrap">
+    <h2>实验2 · 情绪 Flanker：干扰项的情绪价效</h2>
+    <p class="muted"><b>自变量</b>：侧翼情绪价效（愤怒 vs 中性面孔）× 一致性（侧翼箭头与目标同向 vs 反向）　
+    <b>因变量</b>：反应时（正确试次）/ 正确率 / 冲突量（不一致 − 一致 RT）　<b>设计</b>：2×2 被试内，每格 10 试次/人　
+    <b>误差条</b> = ±1 标准误（跨被试）</p>
+    <div id="res-flk"></div>
+  </div>
+  <div class="card" id="res-cm-wrap">
+    <h2>实验3 · C&M 图形知觉：呈现时长 × 编码层级</h2>
+    <p class="muted"><b>自变量</b>：编码类型（位置 / 长度 / 角度 / 面积）× 呈现时长（500ms / 2s / 无限）　
+    <b>因变量</b>：估计百分比与 log₂ 误差　<b>设计</b>：4×3 被试内，每格 8 试次/人（短时呈现后噪点掩蔽）　
+    <b>误差条</b> = ±1 标准误（跨被试）</p>
+    <div id="res-cm"></div>
+    <h2 class="mt">人机对决面板（离线 AI 预跑）</h2>
+    <p class="muted"><b>对照</b>：多模态 LLM（GLM-5.3）vs 人类，同 16 题（C&amp;M 四编码 × 四比例）；
+    AI 无呈现时长压力，仅比较编码维度</p>
+    <div id="res-ai"></div>
+  </div>
+</div>
+
+<div class="progress-shell" id="progress-shell" style="display:none"><div class="progress-bar" id="progress-bar"></div></div>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script src="js/results.js"></script>
+</body>
+</html>
