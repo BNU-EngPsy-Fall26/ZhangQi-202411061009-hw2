@@ -3,61 +3,263 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>注意实验室</title>
+<title>ATTENTION LAB · 注意实验室</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<div class="aurora"></div>
+
 <div class="topbar"><div class="topbar-inner">
-  <span class="brand"><span class="logo">◎</span>注意实验室</span>
-  <span class="nav"><a href="index.html">首页</a><a href="results.html">结果分析</a></span>
+  <span class="brand">
+    <span class="logo">◎</span>
+    ATTENTION LAB
+    <span class="stat">/ <b id="st-clock">--:--:--</b></span>
+  </span>
+  <span class="nav">
+    <a href="index.html">Home</a>
+    <a href="results.html">Analysis</a>
+  </span>
 </div></div>
 
 <div class="wrap wrap-wide">
-  <div class="card fade" style="padding:44px 48px;text-align:center;overflow:hidden">
-    <h1 style="font-size:40px;margin-bottom:4px">注意实验室</h1>
-    <p class="hero-sub" style="margin:0 auto 20px;text-align:center;font-size:16px">
-      三个经典注意实验 · 每个都加入了新条件 · 用真实数据检验
-    </p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
-      <span class="badge info">被试内设计</span>
-      <span class="badge info">摄像头眼动（可选）</span>
-      <span class="badge info">数据自动上传</span>
-      <span class="badge info">结果自动分析</span>
+
+  <!-- ========== 观测台：Canvas 注意力场 ========== -->
+  <div class="hero fade">
+    <canvas id="hero-field"></canvas>
+    <div class="hero-inner">
+      <div class="hero-kicker">
+        <span class="dot"></span>
+        <span>Perceptual Systems Lab · Online</span>
+      </div>
+      <div class="hero-title">
+        ATTENTION<br>
+        <span class="accent">LAB</span><span class="dim">.v2</span>
+      </div>
+      <div class="hero-zh">注 意 实 验 室</div>
+      <p class="hero-desc" style="max-width:560px">
+        把鼠标移到这片场域上。锐利的只有中心一小块，四周正在变暗——
+        这就是你的中央凹。整个实验做的，就是这件事。
+      </p>
+    </div>
+    <div class="hud">
+      <div class="hud-cell">PROTOCOL<b>3 PARADIGMS</b></div>
+      <div class="hud-cell">DESIGN<b class="cy">WITHIN-SUBJECT</b></div>
+      <div class="hud-cell">EYE-TRACK<b class="dim">OPTIONAL</b></div>
+      <div class="hud-cell">DATA<b class="cy" id="st-est">READY</b></div>
     </div>
   </div>
 
+  <!-- ========== 实验入口 ========== -->
   <div class="grid-exp">
     <a class="exp-card" href="experiments/ib.html">
-      <span class="tag">实验 1</span>
+      <div class="exp-head"><span class="idx">01</span><span>Inattentional Blindness</span></div>
       <h3>非注意盲</h3>
-      <p>专注数传球时，每段动画里都会出现一个意外物体——你能注意到吗？</p>
-      <div class="meta">练习 1 轮 + 正式 6 轮 · 约 3 分钟</div>
+      <p class="desc">数着传球，一个东西穿过画面。你会看见它吗？<br>雨伞、金币鹅、枫叶鹅——它长什么样、跑多快，决定了答案。</p>
+      <div class="foot"><span>6 ROUNDS · 3 MIN</span><span class="go">ENTER →</span></div>
     </a>
     <a class="exp-card" href="experiments/flanker.html">
-      <span class="tag">实验 2</span>
+      <div class="exp-head"><span class="idx">02</span><span>Emotional Flanker</span></div>
       <h3>情绪 Flanker</h3>
-      <p>判断箭头方向、忽略旁边的人脸——愤怒的脸更难忽略吗？</p>
-      <div class="meta">练习 16 + 正式 80 试次 · 约 8 分钟</div>
+      <p class="desc">中间的箭头朝哪边？旁边那张愤怒的脸，会不会让判断变慢？</p>
+      <div class="foot"><span>80 TRIALS · 8 MIN</span><span class="go">ENTER →</span></div>
     </a>
     <a class="exp-card" href="experiments/cm.html">
-      <span class="tag">实验 3</span>
+      <div class="exp-head"><span class="idx">03</span><span>Graphical Perception</span></div>
       <h3>图形比例估计</h3>
-      <p>只看 0.5 秒的图形，你能估准蓝色部分占多大比例吗？</p>
-      <div class="meta">练习 8 + 正式 96 试次 · 约 12 分钟</div>
+      <p class="desc">0.5 秒。猜一个百分比。<br>位置、长度、角度、面积——哪种图形撑得住时间压力？</p>
+      <div class="foot"><span>96 TRIALS · 12 MIN</span><span class="go">ENTER →</span></div>
     </a>
   </div>
 
-  <div class="card" style="padding:20px 28px;text-align:center">
-    <p class="muted" style="margin:0">建议在电脑前安静环境完成 · 点击卡片即可开始 · 三个实验任意顺序</p>
+  <div class="home-foot">
+    <span>ENGINEERING PSYCHOLOGY · W5–W8</span>
+    <span><a href="results.html">→ 结果与分析</a></span>
   </div>
 </div>
 
 <div class="progress-shell" id="progress-shell" style="display:none"><div class="progress-bar" id="progress-bar"></div></div>
 <div class="progress-label" id="progress-label"></div>
+
 <script src="js/config.js"></script>
 <script src="js/core.js"></script>
 <script>
-  // 极简装饰（无 SVG，由 CSS 粒子网格提供氛围）
+/* ============================================================
+   首页 · 注意力场（Attention Field）
+   ------------------------------------------------------------
+   刻意做成实验本身的隐喻：
+   · 一群粒子缓慢漂移（场景里的「信息」）
+   · 鼠标所在位置是中央凹：只有那圈内清晰、发光、连线
+   · 离得越远越暗越虚（外周视觉的低分辨）
+   · 点击时中心产生一次「注意投放」脉冲
+   全部 canvas 绘制，无第三方库；低粒子数保证不占 CPU
+   ============================================================ */
+(function(){
+  const cv = document.getElementById('hero-field');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let W = 0, H = 0, DPR = 1;
+  let pts = [];
+  const focal = { x: -9999, y: -9999, r: 150, target: 150, pulse: 0 };
+  const N = 78;
+
+  function resize(){
+    const box = cv.parentElement.getBoundingClientRect();
+    DPR = Math.min(devicePixelRatio || 1, 2);
+    W = box.width; H = box.height;
+    cv.width  = Math.round(W * DPR);
+    cv.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+
+  function seed(){
+    pts = [];
+    for (let i = 0; i < N; i++){
+      pts.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - .5) * 0.16,
+        vy: (Math.random() - .5) * 0.16,
+        r: 0.8 + Math.random() * 1.5,
+        h: Math.random() < .18 ? 'amb' : (Math.random() < .5 ? 'grn' : 'cyn'),
+        tw: Math.random() * Math.PI * 2,          // 闪烁相位
+        tws: 0.006 + Math.random() * 0.014,
+      });
+    }
+  }
+
+  const COL = {
+    grn: [38, 255, 164],
+    cyn: [62, 225, 255],
+    amb: [255, 180, 84]
+  };
+
+  function draw(t){
+    ctx.clearRect(0, 0, W, H);
+
+    // 中央凹半径平滑跟随（避免跳变）
+    focal.r += (focal.target - focal.r) * 0.09;
+    if (focal.pulse > 0) focal.pulse *= 0.955;
+
+    // 粒子漂移
+    for (const p of pts){
+      if (!reduce){
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < -20) p.x = W + 20; if (p.x > W + 20) p.x = -20;
+        if (p.y < -20) p.y = H + 20; if (p.y > H + 20) p.y = -20;
+      }
+      p.tw += p.tws;
+    }
+
+    // 中心-外周：计算每个粒子的「清晰度」
+    const d2f = p => Math.hypot(p.x - focal.x, p.y - focal.y);
+    const R = focal.r + focal.pulse * 90;
+
+    // ① 粒子之间的连线（只在中央凹内，模拟可分辨的结构）
+    ctx.lineWidth = 0.6;
+    for (let i = 0; i < pts.length; i++){
+      for (let j = i + 1; j < pts.length; j++){
+        const a = pts[i], b = pts[j];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const d = Math.hypot(dx, dy);
+        if (d > 74) continue;
+        const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        const fd = Math.hypot(mid.x - focal.x, mid.y - focal.y);
+        if (fd > R) continue;                        // 外围不画线
+        const focus = 1 - fd / R;                    // 越近越亮
+        const prox  = 1 - d / 74;
+        const al = focus * prox * 0.42;
+        if (al <= 0.01) continue;
+        ctx.strokeStyle = `rgba(122,200,215,${al.toFixed(3)})`;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      }
+    }
+
+    // ② 粒子本体
+    for (const p of pts){
+      const fd = d2f(p);
+      const focus = fd <= R ? 1 - fd / R : 0;        // 中央凹内清晰
+      const outer = fd <= R ? 0 : Math.max(0, 1 - (fd - R) / (R * 2.2)); // 外周余晖
+      const glow = Math.max(focus, outer * 0.42);
+      const twinkle = 0.62 + 0.38 * Math.sin(p.tw);
+      const al = Math.min(1, glow * twinkle);
+      if (al < 0.02) continue;
+      const c = COL[p.h];
+      const size = p.r * (0.55 + glow * 0.85);
+
+      // 光晕
+      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size * 5.5);
+      g.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},${(al * .42).toFixed(3)})`);
+      g.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(p.x, p.y, size * 5.5, 0, Math.PI * 2); ctx.fill();
+
+      // 核心
+      ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${al.toFixed(3)})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, size, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // ③ 中央凹光圈（极细的准星环）
+    if (focal.x > -1000){
+      const rr = R * 1.28;
+      ctx.strokeStyle = `rgba(38,255,164,${(0.10 + focal.pulse * 0.22).toFixed(3)})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(focal.x, focal.y, rr, 0, Math.PI * 2); ctx.stroke();
+
+      // 四个刻度
+      ctx.strokeStyle = `rgba(38,255,164,${(0.24 + focal.pulse * 0.3).toFixed(3)})`;
+      for (let k = 0; k < 4; k++){
+        const a = k * Math.PI / 2 + Math.PI / 4;
+        const x1 = focal.x + Math.cos(a) * (rr + 3);
+        const y1 = focal.y + Math.sin(a) * (rr + 3);
+        const x2 = focal.x + Math.cos(a) * (rr + 9);
+        const y2 = focal.y + Math.sin(a) * (rr + 9);
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      }
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  // 鼠标/触摸 → 中央凹
+  function move(e){
+    const r = cv.getBoundingClientRect();
+    const p = e.touches ? e.touches[0] : e;
+    focal.x = p.clientX - r.left;
+    focal.y = p.clientY - r.top;
+    focal.target = 158;
+  }
+  const host = cv.parentElement;
+  host.addEventListener('mousemove', move);
+  host.addEventListener('touchmove', move, { passive: true });
+  host.addEventListener('mouseleave', () => { focal.target = 96; });
+  host.addEventListener('click', () => { focal.pulse = 1; });
+
+  function boot(){
+    resize(); seed(); requestAnimationFrame(draw);
+    // 开场时中央凹停在标题处，做一个「自检」式扫过
+    focal.x = W * 0.30; focal.y = H * 0.44;
+    if (!reduce){
+      setTimeout(() => { focal.target = 210; }, 350);
+      setTimeout(() => { focal.target = 158; }, 1400);
+    }
+  }
+  boot();
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { resize(); seed(); }, 180); });
+})();
+
+/* 顶部时钟（像仪器一样走） */
+(function(){
+  const el = document.getElementById('st-clock');
+  if (!el) return;
+  const tick = () => {
+    const d = new Date();
+    el.textContent = [d.getHours(), d.getMinutes(), d.getSeconds()]
+      .map(n => String(n).padStart(2, '0')).join(':');
+  };
+  tick(); setInterval(tick, 1000);
+})();
 </script>
 </body>
 </html>

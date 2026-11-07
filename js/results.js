@@ -231,16 +231,16 @@ function chart(canvas, cfg) {
   const T = hasTitle ? (hasLegend ? 54 : 32) : (hasLegend ? 34 : 8);
   const L = 48, R = 12, B = 44;
   const pw = W - L - R, ph = H - T - B;
-  const font = "12px Inter, 'Microsoft YaHei', sans-serif";
-  ctx.font = font; ctx.fillStyle = "#2b2f36"; ctx.strokeStyle = "#e5e7eb";
+  const font = "11.5px 'JetBrains Mono', ui-monospace, monospace";
+  ctx.font = font; ctx.fillStyle = "#1e293b"; ctx.strokeStyle = "#dde5ec";
   if (hasTitle) {
-    ctx.font = "600 13px Inter, 'Microsoft YaHei', sans-serif";
+    ctx.font = "500 11.5px 'JetBrains Mono', ui-monospace, monospace";
     ctx.textAlign = "left"; ctx.fillText(cfg.title, L, 15);
     ctx.font = font;
   }
   if (hasLegend) {
     const legY = hasTitle ? 37 : 16;
-    ctx.font = "11px Inter, 'Microsoft YaHei', sans-serif";
+    ctx.font = "10.5px 'JetBrains Mono', ui-monospace, monospace";
     const itemW = cfg.series.map(s => (cfg.type === "bar" ? 14 : 24) + ctx.measureText(s.name).width + 8);
     const totalW = itemW.reduce((a, b) => a + b, 0);
     const avail = W - L - R;
@@ -249,7 +249,7 @@ function chart(canvas, cfg) {
     cfg.series.forEach((s, i) => {
       if (cfg.type === "bar") { ctx.fillStyle = s.color; ctx.fillRect(lx, legY - 9, 10, 10); }
       else { ctx.strokeStyle = s.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(lx, legY - 4); ctx.lineTo(lx + 18, legY - 4); ctx.stroke(); }
-      ctx.fillStyle = "#6b7280"; ctx.textAlign = "left";
+      ctx.fillStyle = "#64748b"; ctx.textAlign = "left";
       ctx.fillText(s.name, lx + (cfg.type === "bar" ? 14 : 24), legY);
       lx += itemW[i] + gap;
     });
@@ -263,8 +263,8 @@ function chart(canvas, cfg) {
   const ticks = cfg.yticks || 5;
   for (let i = 0; i <= ticks; i++) {
     const v = ymin + (ymax - ymin) * i / ticks, y = y2p(v);
-    ctx.strokeStyle = "#eef0f3"; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(W - R, y); ctx.stroke();
-    ctx.fillStyle = "#6b7280"; ctx.textAlign = "right";
+    ctx.strokeStyle = "#e2e8f0"; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(W - R, y); ctx.stroke();
+    ctx.fillStyle = "#64748b"; ctx.textAlign = "right";
     ctx.fillText(+v.toFixed(cfg.yfmt === 1 ? 0 : 2), L - 6, y + 4);
   }
   ctx.textAlign = "center";
@@ -291,7 +291,7 @@ function chart(canvas, cfg) {
         if (!p || !s.errs[i]) return;
         const y1 = Math.max(Math.min(y2p(p.v - s.errs[i]), T + ph), T);
         const y2 = Math.max(Math.min(y2p(p.v + s.errs[i]), T + ph), T);
-        ctx.strokeStyle = "#3f4753"; ctx.lineWidth = 1.4;
+        ctx.strokeStyle = "#475569"; ctx.lineWidth = 1.4;
         ctx.beginPath();
         ctx.moveTo(p.x, y1); ctx.lineTo(p.x, y2);
         ctx.moveTo(p.x - 4, y1); ctx.lineTo(p.x + 4, y1);
@@ -302,7 +302,7 @@ function chart(canvas, cfg) {
         if (!p) return;
         const lab = +p.v.toFixed(cfg.yfmt === 1 ? 0 : 2);
         const yLab = (s.errs && s.errs[i]) ? Math.max(y2p(p.v + s.errs[i]), T) - 5 : Math.min(y2p(p.v), T + ph) - 5;
-        ctx.fillStyle = "#2b2f36"; ctx.font = "11px Inter, sans-serif";
+        ctx.fillStyle = "#1e293b"; ctx.font = "10.5px 'JetBrains Mono', ui-monospace, monospace";
         ctx.fillText(lab, p.x, Math.max(yLab, T + 8));
         ctx.font = font;
       });
@@ -323,7 +323,7 @@ function chart(canvas, cfg) {
         const x = L + pw * (i / Math.max(1, s.values.length - 1));
         const y1 = Math.max(Math.min(y2p(v - s.errs[i]), T + ph), T);
         const y2 = Math.max(Math.min(y2p(v + s.errs[i]), T + ph), T);
-        ctx.strokeStyle = "#3f4753"; ctx.lineWidth = 1.3;
+        ctx.strokeStyle = "#475569"; ctx.lineWidth = 1.3;
         ctx.beginPath();
         ctx.moveTo(x, y1); ctx.lineTo(x, y2);
         ctx.moveTo(x - 4, y1); ctx.lineTo(x + 4, y1);
@@ -345,14 +345,14 @@ function chart(canvas, cfg) {
     ctx.stroke(); ctx.setLineDash([]);
     if (p.label) { ctx.fillStyle = p.color || "#d97706"; ctx.textAlign = "right"; ctx.fillText(p.label, W - R - 2, y2p(p.value || 0) - 6); ctx.textAlign = "center"; }
   });
-  ctx.fillStyle = "#2b2f36";
+  ctx.fillStyle = "#1e293b";
   (cfg.xlabels || []).forEach((t, i) => {
     const x = cfg.type === "bar" ? L + (pw / cfg.xlabels.length) * i + pw / cfg.xlabels.length / 2
       : L + pw * (i / Math.max(1, cfg.xlabels.length - 1));
     ctx.fillText(t, x, H - 24);
   });
   // 标题已在头部区域绘制（与图例分层，不再重叠）
-  if (cfg.ylabel) { ctx.save(); ctx.translate(12, T + ph / 2); ctx.rotate(-Math.PI / 2); ctx.fillStyle = "#6b7280"; ctx.fillText(cfg.ylabel, 0, 0); ctx.restore(); }
+  if (cfg.ylabel) { ctx.save(); ctx.translate(12, T + ph / 2); ctx.rotate(-Math.PI / 2); ctx.fillStyle = "#64748b"; ctx.fillText(cfg.ylabel, 0, 0); ctx.restore(); }
 }
 
 /* ---------- 全局数据 ---------- */
@@ -1292,7 +1292,9 @@ function renderAll() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  $("#deco-tl").innerHTML = DECO_SVG.tl; $("#deco-br").innerHTML = DECO_SVG.br;
+  const dt = $("#deco-tl"), db = $("#deco-br");
+  if (dt) dt.innerHTML = DECO_SVG.tl;
+  if (db) db.innerHTML = DECO_SVG.br;
   RES.pred = buildPredicted();               // 预期结果（预注册预测示意）常驻展示
   renderAll();
   // 全班课堂数据（本地快照）异步加载，完成后重渲染出现对比面板

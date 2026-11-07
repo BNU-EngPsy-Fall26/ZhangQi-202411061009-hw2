@@ -3,22 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>结果与分析 · 注意实验室</title>
+<title>ANALYSIS · 注意实验室</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<div class="aurora"></div>
+
 <div class="topbar"><div class="topbar-inner">
-  <span class="brand"><span class="logo">◎</span>注意实验室 · 结果分析</span>
-  <span class="nav"><a href="index.html">首页</a><a href="experiments/ib.html">实验1</a><a href="experiments/flanker.html">实验2</a><a href="experiments/cm.html">实验3</a></span>
+  <span class="brand">
+    <span class="logo">◎</span>
+    ATTENTION LAB
+    <span class="stat">/ ANALYSIS</span>
+  </span>
+  <span class="nav">
+    <a href="index.html">Home</a>
+    <a href="experiments/ib.html">01</a>
+    <a href="experiments/flanker.html">02</a>
+    <a href="experiments/cm.html">03</a>
+  </span>
 </div></div>
 
 <div class="wrap wrap-wide">
-  <div class="card fade" style="padding:36px 40px">
-    <h1 style="font-size:28px">结果与分析</h1>
-    <p class="hero-sub" style="margin-bottom:16px">
-      左列实测数据（导入后出现），右列预注册预期结果（始终显示）。导入后自动生成统计检验。
+
+  <div class="card fade" style="padding:34px 38px">
+    <div class="hero-kicker" style="margin-bottom:18px">
+      <span class="dot"></span><span>Data Readout</span>
+    </div>
+    <h1 style="font-size:30px;margin-bottom:10px">结果与分析</h1>
+    <p class="hero-sub">
+      左列为实测数据，右列为预注册预期。导入数据后自动生成显著性检验与逐条预测判定。
     </p>
-    <div class="btn-row" style="margin-top:0">
+    <div class="btn-row">
       <button class="btn" id="btn-import">导入 CSV / JSON</button>
       <input type="file" id="file-in" accept=".csv,.json" multiple style="display:none">
       <button class="btn gray" id="btn-fetch-api">从收数接口读取</button>
@@ -28,43 +43,47 @@
 
   <div class="card fade" id="res-report-wrap" style="display:none">
     <h2>自动分析报告</h2>
-    <p class="hero-sub">按收数前的预测逐条判定，附显著性检验。</p>
+    <p class="hero-sub" style="margin-bottom:14px">
+      按收数前的预测逐条判定，附显著性检验。可复制为 Markdown 直接粘进 README。
+    </p>
     <div id="res-report"></div>
     <div class="btn-row"><button class="btn ghost" id="btn-copy-md">复制报告文本</button></div>
   </div>
 
   <div class="card" id="res-ib-wrap">
-    <h2>实验 1 · 非注意盲</h2>
+    <h2>01 · 非注意盲</h2>
     <p class="muted">
-      <b>IV</b>：形象（雨伞 / 金币鹅 / 枫叶鹅）× 速度（快 / 慢 / 静止）× 轮次　
-      <b>DV</b>：察觉率 + 迫选正确率　
-      <b>设计</b>：被试内 6 轮/人
+      <b>IV</b> 形象（雨伞 / 金币鹅 / 枫叶鹅）× 速度（快 / 慢 / 静止）× 轮次　
+      <b>DV</b> 察觉率 + 迫选正确率　<b>设计</b> 被试内 6 轮/人　<b>误差条</b> ±1 SE
     </p>
     <div id="res-ib"></div>
   </div>
 
   <div class="card" id="res-flk-wrap">
-    <h2>实验 2 · 情绪 Flanker</h2>
+    <h2>02 · 情绪 Flanker</h2>
     <p class="muted">
-      <b>IV</b>：侧翼情绪（愤怒 vs 中性）× 一致性　
-      <b>DV</b>：反应时 / 冲突量　
-      <b>设计</b>：2×2 被试内
+      <b>IV</b> 侧翼情绪（愤怒 / 中性）× 一致性　
+      <b>DV</b> 反应时 / 冲突量　<b>设计</b> 2×2 被试内　<b>误差条</b> ±1 SE
     </p>
     <div id="res-flk"></div>
   </div>
 
   <div class="card" id="res-cm-wrap">
-    <h2>实验 3 · 图形比例估计</h2>
+    <h2>03 · 图形比例估计</h2>
     <p class="muted">
-      <b>IV</b>：编码类型 × 呈现时长　
-      <b>DV</b>：估计百分比 / log₂ 误差　
-      <b>设计</b>：4×3 被试内
+      <b>IV</b> 编码（位置 / 长度 / 角度 / 面积）× 呈现时长（500ms / 2s / ∞）　
+      <b>DV</b> 估计百分比 / log₂ 误差　<b>设计</b> 4×3 被试内　<b>误差条</b> ±1 SE
     </p>
     <div id="res-cm"></div>
     <hr>
-    <h2>人机对决</h2>
-    <p class="muted">人类 vs GLM-5.3 / Grok-4.7，同 16 题，AI 不受时长限制。</p>
+    <h2>Human vs Model</h2>
+    <p class="muted">人类 vs GLM-5.3 / Grok-4.7 · 同 16 题 · AI 不受呈现时长限制</p>
     <div id="res-ai"></div>
+  </div>
+
+  <div class="home-foot">
+    <span>ENGINEERING PSYCHOLOGY · W5–W8</span>
+    <span><a href="index.html">← 返回首页</a></span>
   </div>
 </div>
 
