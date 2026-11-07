@@ -258,11 +258,11 @@ body::after{
 }
 /* Canvas 铺满作为背景 */
 #hero-field{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
-.hero-inner{position:relative;z-index:3;padding:52px 46px 46px;pointer-events:none}
+.hero-inner{position:relative;z-index:3;padding:64px 52px 58px;pointer-events:none;min-height:320px;display:flex;flex-direction:column;justify-content:center}
 .hero-inner > *{pointer-events:auto}
 
 .hero-kicker{
-  display:flex;align-items:center;gap:10px;margin-bottom:26px;
+  display:flex;align-items:center;gap:10px;margin-bottom:30px;
   font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;
   text-transform:uppercase;color:var(--ink-3);
 }
@@ -272,21 +272,27 @@ body::after{
 }
 @keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.18}}
 
+/* ---------- 主标题：两行堆叠，字重与字距拉开层次 ---------- */
 .hero-title{
-  font-family:var(--disp);font-size:clamp(38px,6vw,62px);font-weight:600;
-  line-height:1.02;letter-spacing:-.035em;color:var(--ink);
-  margin-bottom:6px;
+  font-family:var(--disp);font-weight:700;
+  margin:0 0 4px;line-height:.92;
+  display:flex;flex-direction:column;gap:2px;
 }
-.hero-title .dim{color:var(--ink-3)}
-.hero-title .accent{
-  color:var(--grn);text-shadow:0 0 26px rgba(38,255,164,.35);
+.hero-title .line{
+  display:block;
+  font-size:clamp(46px,8.4vw,84px);
+  letter-spacing:-.045em;
+  color:var(--ink);
+  text-shadow:0 2px 0 rgba(255,255,255,.04);
 }
-.hero-zh{
-  font-family:var(--zh);font-size:16px;letter-spacing:.42em;
-  color:var(--ink-2);margin-bottom:26px;font-weight:400;
-}
-.hero-desc{
-  max-width:520px;font-size:14px;line-height:1.85;color:#9fb0bd;margin-bottom:0;
+/* 第二行：细体 + 宽字距 + 信号色，形成对比 */
+.hero-title .accent-line{
+  font-size:clamp(24px,4.4vw,44px);
+  font-weight:300;
+  letter-spacing:.30em;
+  color:var(--grn);
+  text-shadow:0 0 28px rgba(38,255,164,.40);
+  padding-left:3px;
 }
 
 /* 首页读数条 */

@@ -31,15 +31,10 @@
         <span class="dot"></span>
         <span>Perceptual Systems Lab · Online</span>
       </div>
-      <div class="hero-title">
-        ATTENTION<br>
-        <span class="accent">LAB</span><span class="dim">.v2</span>
-      </div>
-      <div class="hero-zh">注 意 实 验 室</div>
-      <p class="hero-desc" style="max-width:560px">
-        把鼠标移到这片场域上。锐利的只有中心一小块，四周正在变暗——
-        这就是你的中央凹。整个实验做的，就是这件事。
-      </p>
+      <h1 class="hero-title">
+        <span class="line">ATTENTION</span>
+        <span class="line accent-line">LABORATORY</span>
+      </h1>
     </div>
     <div class="hud">
       <div class="hud-cell">PROTOCOL<b>3 PARADIGMS</b></div>
@@ -238,11 +233,11 @@
 
   function boot(){
     resize(); seed(); requestAnimationFrame(draw);
-    // 开场时中央凹停在标题处，做一个「自检」式扫过
-    focal.x = W * 0.30; focal.y = H * 0.44;
+    // 开场中央凹落在主标题上，做一个自检式的缓慢扫过
+    focal.x = W * 0.26; focal.y = H * 0.52;
     if (!reduce){
-      setTimeout(() => { focal.target = 210; }, 350);
-      setTimeout(() => { focal.target = 158; }, 1400);
+      setTimeout(() => { focal.target = 200; }, 300);
+      setTimeout(() => { focal.target = 158; }, 1500);
     }
   }
   boot();
