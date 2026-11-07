@@ -406,8 +406,8 @@ function bindConsentFlow(onStart) {
   });
 }
 
-/* ---------- 装饰 SVG（简约几何线条，静态无动画；永不进入刺激画布） ---------- */
+/* ---------- 装饰：全交给 CSS 粒子网格与极光背景，SVG 置空 ---------- */
 const DECO_SVG = {
-  tl: `<svg width="120" height="120" viewBox="0 0 120 120" fill="none" stroke="#4f46e5" stroke-width="1"><circle cx="30" cy="30" r="20"/><circle cx="30" cy="30" r="10"/><line x1="10" y1="80" x2="80" y2="80"/><line x1="25" y1="70" x2="25" y2="90"/><line x1="45" y1="70" x2="45" y2="90"/><line x1="65" y1="70" x2="65" y2="90"/></svg>`,
-  br: `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" stroke="#4f46e5" stroke-width="1"><rect x="20" y="20" width="40" height="40" rx="8"/><circle cx="70" cy="70" r="15"/><line x1="40" y1="60" x2="40" y2="85"/><line x1="55" y1="75" x2="25" y2="75"/></svg>`,
+  tl: ``,
+  br: ``,
 };

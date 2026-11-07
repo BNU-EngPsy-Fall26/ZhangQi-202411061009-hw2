@@ -4,26 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>注意实验室</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div class="topbar"><div class="topbar-inner">
   <span class="brand"><span class="logo">◎</span>注意实验室</span>
-  <span class="nav"><a href="index.html">首页</a><a href="results.html">结果与分析</a></span>
+  <span class="nav"><a href="index.html">首页</a><a href="results.html">结果分析</a></span>
 </div></div>
 
-<div class="deco deco-tl" id="deco-tl"></div>
-<div class="deco deco-br" id="deco-br"></div>
-
 <div class="wrap wrap-wide">
-  <div class="card fade" style="padding:40px 44px">
-    <h1 style="font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:6px">注意实验室</h1>
-    <p class="hero-sub" style="font-size:16px;margin-bottom:16px">
-      三个经典注意实验的网页复现与改进，每个实验都加入了新条件并用真实数据检验。
+  <div class="card fade" style="padding:44px 48px;text-align:center;overflow:hidden">
+    <h1 style="font-size:40px;margin-bottom:4px">注意实验室</h1>
+    <p class="hero-sub" style="margin:0 auto 20px;text-align:center;font-size:16px">
+      三个经典注意实验 · 每个都加入了新条件 · 用真实数据检验
     </p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
       <span class="badge info">被试内设计</span>
       <span class="badge info">摄像头眼动（可选）</span>
       <span class="badge info">数据自动上传</span>
@@ -33,44 +28,36 @@
 
   <div class="grid-exp">
     <a class="exp-card" href="experiments/ib.html">
-      <span class="tag">实验 1 · 选择性注意</span>
+      <span class="tag">实验 1</span>
       <h3>非注意盲</h3>
-      <p>观看两支球队的传球动画并专注计数。每段动画都会出现一个不同的意外物体——
-      它是快速穿过还是缓慢移动？和球员同类还是完全无关？</p>
+      <p>专注数传球时，每段动画里都会出现一个意外物体——你能注意到吗？</p>
       <div class="meta">练习 1 轮 + 正式 6 轮 · 约 3 分钟</div>
     </a>
     <a class="exp-card" href="experiments/flanker.html">
-      <span class="tag">实验 2 · 干扰抑制</span>
+      <span class="tag">实验 2</span>
       <h3>情绪 Flanker</h3>
-      <p>判断中央箭头的方向，忽略两侧的人脸。愤怒的面孔是否比中性的面孔
-      产生更大的干扰？</p>
+      <p>判断箭头方向、忽略旁边的人脸——愤怒的脸更难忽略吗？</p>
       <div class="meta">练习 16 + 正式 80 试次 · 约 8 分钟</div>
     </a>
     <a class="exp-card" href="experiments/cm.html">
-      <span class="tag">实验 3 · 图形知觉</span>
+      <span class="tag">实验 3</span>
       <h3>图形比例估计</h3>
-      <p>估计蓝色图形占整体的比例。看图时间只有 0.5 秒时，哪些图形类型
-      还能估得准？</p>
+      <p>只看 0.5 秒的图形，你能估准蓝色部分占多大比例吗？</p>
       <div class="meta">练习 8 + 正式 96 试次 · 约 12 分钟</div>
     </a>
   </div>
 
-  <div class="card" style="padding:24px 32px">
-    <p class="muted" style="margin:0">
-      直接点击上方卡片开始实验。建议在电脑前、安静环境下完成。
-      开启眼动可获得更丰富的数据，但纯行为数据同样有效。
-    </p>
+  <div class="card" style="padding:20px 28px;text-align:center">
+    <p class="muted" style="margin:0">建议在电脑前安静环境完成 · 点击卡片即可开始 · 三个实验任意顺序</p>
   </div>
 </div>
 
 <div class="progress-shell" id="progress-shell" style="display:none"><div class="progress-bar" id="progress-bar"></div></div>
 <div class="progress-label" id="progress-label"></div>
-
 <script src="js/config.js"></script>
 <script src="js/core.js"></script>
 <script>
-  $("#deco-tl").innerHTML = DECO_SVG.tl;
-  $("#deco-br").innerHTML = DECO_SVG.br;
+  // 极简装饰（无 SVG，由 CSS 粒子网格提供氛围）
 </script>
 </body>
 </html>

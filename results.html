@@ -4,22 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>结果与分析 · 注意实验室</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div class="topbar"><div class="topbar-inner">
-  <span class="brand"><span class="logo">◎</span>注意实验室 · 结果与分析</span>
+  <span class="brand"><span class="logo">◎</span>注意实验室 · 结果分析</span>
   <span class="nav"><a href="index.html">首页</a><a href="experiments/ib.html">实验1</a><a href="experiments/flanker.html">实验2</a><a href="experiments/cm.html">实验3</a></span>
 </div></div>
-<div class="deco deco-tl" id="deco-tl"></div><div class="deco deco-br" id="deco-br"></div>
 
 <div class="wrap wrap-wide">
   <div class="card fade" style="padding:36px 40px">
-    <h1>结果与分析</h1>
+    <h1 style="font-size:28px">结果与分析</h1>
     <p class="hero-sub" style="margin-bottom:16px">
-      左侧显示<b>实测数据</b>的统计结果（导入后出现），右侧始终显示<b>预期结果</b>
-      （收数前预注册的预测，橙色标签）。导入后自动生成统计检验与逐条判定。
+      左列实测数据（导入后出现），右列预注册预期结果（始终显示）。导入后自动生成统计检验。
     </p>
     <div class="btn-row" style="margin-top:0">
       <button class="btn" id="btn-import">导入 CSV / JSON</button>
@@ -31,7 +28,7 @@
 
   <div class="card fade" id="res-report-wrap" style="display:none">
     <h2>自动分析报告</h2>
-    <p class="hero-sub">按收数前的预测逐条判定，附显著性检验；点击下方按钮可将填好数字的报告直接粘贴进 README。</p>
+    <p class="hero-sub">按收数前的预测逐条判定，附显著性检验。</p>
     <div id="res-report"></div>
     <div class="btn-row"><button class="btn ghost" id="btn-copy-md">复制报告文本</button></div>
   </div>
@@ -39,10 +36,9 @@
   <div class="card" id="res-ib-wrap">
     <h2>实验 1 · 非注意盲</h2>
     <p class="muted">
-      <b>自变量</b>：物体形象（雨伞 / 金币鹅 / 枫叶鹅）× 速度（快 / 慢 / 静止）× 轮次　
-      <b>因变量</b>：察觉率 + 迫选正确率　
-      <b>设计</b>：被试内，每人 6 轮　
-      <b>误差条</b> = ±1 SE
+      <b>IV</b>：形象（雨伞 / 金币鹅 / 枫叶鹅）× 速度（快 / 慢 / 静止）× 轮次　
+      <b>DV</b>：察觉率 + 迫选正确率　
+      <b>设计</b>：被试内 6 轮/人
     </p>
     <div id="res-ib"></div>
   </div>
@@ -50,10 +46,9 @@
   <div class="card" id="res-flk-wrap">
     <h2>实验 2 · 情绪 Flanker</h2>
     <p class="muted">
-      <b>自变量</b>：侧翼情绪（愤怒 vs 中性）× 一致性　
-      <b>因变量</b>：反应时 / 正确率 / 冲突量　
-      <b>设计</b>：2×2 被试内　
-      <b>误差条</b> = ±1 SE
+      <b>IV</b>：侧翼情绪（愤怒 vs 中性）× 一致性　
+      <b>DV</b>：反应时 / 冲突量　
+      <b>设计</b>：2×2 被试内
     </p>
     <div id="res-flk"></div>
   </div>
@@ -61,18 +56,14 @@
   <div class="card" id="res-cm-wrap">
     <h2>实验 3 · 图形比例估计</h2>
     <p class="muted">
-      <b>自变量</b>：编码类型（位置 / 长度 / 角度 / 面积）× 呈现时长（500ms / 2s / 无限）　
-      <b>因变量</b>：估计百分比与 log₂ 误差　
-      <b>设计</b>：4×3 被试内　
-      <b>误差条</b> = ±1 SE
+      <b>IV</b>：编码类型 × 呈现时长　
+      <b>DV</b>：估计百分比 / log₂ 误差　
+      <b>设计</b>：4×3 被试内
     </p>
     <div id="res-cm"></div>
     <hr>
     <h2>人机对决</h2>
-    <p class="muted">
-      人类 vs 多模态大语言模型（GLM-5.3 与 Grok-4.7），同 16 题
-      （C&amp;M 四编码 × 四比例），AI 不受呈现时长限制。
-    </p>
+    <p class="muted">人类 vs GLM-5.3 / Grok-4.7，同 16 题，AI 不受时长限制。</p>
     <div id="res-ai"></div>
   </div>
 </div>
@@ -81,9 +72,5 @@
 <script src="js/config.js"></script>
 <script src="js/core.js"></script>
 <script src="js/results.js"></script>
-<script>
-  $("#deco-tl").innerHTML = DECO_SVG.tl;
-  $("#deco-br").innerHTML = DECO_SVG.br;
-</script>
 </body>
 </html>
