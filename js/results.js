@@ -249,7 +249,7 @@ function chart(canvas, cfg) {
     cfg.series.forEach((s, i) => {
       if (cfg.type === "bar") { ctx.fillStyle = s.color; ctx.fillRect(lx, legY - 9, 10, 10); }
       else { ctx.strokeStyle = s.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(lx, legY - 4); ctx.lineTo(lx + 18, legY - 4); ctx.stroke(); }
-      ctx.fillStyle = "#7f93a8"; ctx.textAlign = "left";
+      ctx.fillStyle = "#64748b"; ctx.textAlign = "left";
       ctx.fillText(s.name, lx + (cfg.type === "bar" ? 14 : 24), legY);
       lx += itemW[i] + gap;
     });
@@ -264,7 +264,7 @@ function chart(canvas, cfg) {
   for (let i = 0; i <= ticks; i++) {
     const v = ymin + (ymax - ymin) * i / ticks, y = y2p(v);
     ctx.strokeStyle = "#e8eef3"; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(W - R, y); ctx.stroke();
-    ctx.fillStyle = "#7f93a8"; ctx.textAlign = "right";
+    ctx.fillStyle = "#64748b"; ctx.textAlign = "right";
     ctx.fillText(+v.toFixed(cfg.yfmt === 1 ? 0 : 2), L - 6, y + 4);
   }
   ctx.textAlign = "center";
@@ -352,7 +352,7 @@ function chart(canvas, cfg) {
     ctx.fillText(t, x, H - 24);
   });
   // 标题已在头部区域绘制（与图例分层，不再重叠）
-  if (cfg.ylabel) { ctx.save(); ctx.translate(12, T + ph / 2); ctx.rotate(-Math.PI / 2); ctx.fillStyle = "#7f93a8"; ctx.fillText(cfg.ylabel, 0, 0); ctx.restore(); }
+  if (cfg.ylabel) { ctx.save(); ctx.translate(12, T + ph / 2); ctx.rotate(-Math.PI / 2); ctx.fillStyle = "#64748b"; ctx.fillText(cfg.ylabel, 0, 0); ctx.restore(); }
 }
 
 /* ---------- 全局数据 ---------- */
@@ -512,20 +512,20 @@ function drawIBCharts(rows, sfx, label) {
   chart($("#c-ib-rate-" + sfx), {
     type: "bar", ymax: 1, yfmt: 2, yticks: 4,
     xlabels: IB_SPEEDS.map(s => IB_SP_CN[s]),
-    series: [{ name: label + "察觉率", color: isReal ? "#00c8f0" : "#d97706",
+    series: [{ name: label + "察觉率", color: isReal ? "#7c3aed" : "#d97706",
       values: rSpeed.map(v => v == null ? 0 : +v.toFixed(3)),
       errs: IB_SPEEDS.map(s => seSpeed.get(s) || null) }],
     // 双模型可视化（加分项2）：运动捕获模型（速度递增）vs 显著性恒定模型（与速度无关）
     predLines: isReal && rSpeed.some(v => v != null)
       ? [{ values: [0.75, 0.25, 0.25], color: "#d97706", label: "运动捕获模型预测" },
-         { value: meanRate, color: "#7f93a8", label: "显著性恒定模型" }]
+         { value: meanRate, color: "#64748b", label: "显著性恒定模型" }]
       : [],
     ylabel: "察觉率", title: label + "：速度主效应",
   });
   chart($("#c-ib-id-" + sfx), {
     type: "bar", ymax: 1, yfmt: 2, yticks: 4,
     xlabels: IB_IDS.map(i => IB_ID_CN[i]),
-    series: [{ name: label + "察觉率", color: isReal ? "#8b3dff" : "#d97706",
+    series: [{ name: label + "察觉率", color: isReal ? "#06b6d4" : "#d97706",
       values: rId.map(v => v == null ? 0 : +v.toFixed(3)),
       errs: IB_IDS.map(i => seId.get(i) || null) }],
     predLines: isReal && rId.some(v => v != null) ? [{ values: [0.30, 0.50, 0.45], color: "#d97706", label: "预测序" }] : [],
@@ -534,7 +534,7 @@ function drawIBCharts(rows, sfx, label) {
   chart($("#c-ib-round-" + sfx), {
     type: "line", ymin: 0, ymax: 1, yfmt: 2, yticks: 4,
     xlabels: ["1", "2", "3", "4", "5", "6"],
-    series: [{ name: label + "察觉率", color: isReal ? "#00c8f0" : "#d97706",
+    series: [{ name: label + "察觉率", color: isReal ? "#7c3aed" : "#d97706",
       values: rRound.map(v => v == null ? null : +v.toFixed(3)),
       errs: [1, 2, 3, 4, 5, 6].map(k => seRound.get(k) || null) }],
     ylabel: "察觉率", title: label + "：轮次效应（预期建立）",
@@ -546,7 +546,7 @@ function drawIBCharts(rows, sfx, label) {
     chart($("#c-ib-gaze-" + sfx), {
       type: "bar", ymax: 0.8, yfmt: 2, yticks: 4,
       xlabels: ["察觉到", "未察觉"],
-      series: [{ name: "注视接触率", color: "#8b3dff",
+      series: [{ name: "注视接触率", color: "#06b6d4",
         values: [cSeen.length ? +mean(cSeen).toFixed(3) : 0, cMissed.length ? +mean(cMissed).toFixed(3) : 0],
         errs: [seGaze.get("n1") || null, seGaze.get("n0") || null] }],
       ylabel: "接触率", title: label + "：看了 ≠ 看见？",
@@ -694,7 +694,7 @@ function drawFLKCharts(m, sfx, label, rows) {
   chart($("#c-flk-rt-" + sfx), {
     type: "bar", ymin: 0, ymax: Math.ceil(ymaxR / 100) * 100, yfmt: 1,
     xlabels: ["中性·一致", "中性·不一致", "愤怒·一致", "愤怒·不一致"],
-    series: [{ name: "RT(ms)", color: isReal ? "#00c8f0" : "#d97706",
+    series: [{ name: "RT(ms)", color: isReal ? "#7c3aed" : "#d97706",
       values: [m.nC, m.nI, m.aC, m.aI].map(v => v == null ? 0 : Math.round(v)),
       errs: ["neutral_1", "neutral_0", "angry_1", "angry_0"].map(k => seCell.get(k) || null) }],
     ylabel: "反应时", title: label + "：四条件 RT",
@@ -707,7 +707,7 @@ function drawFLKCharts(m, sfx, label, rows) {
       series: [{ name: "冲突量", color: isReal ? "#d97706" : "#d97706",
         values: [m.costN, m.costA].map(v => v == null ? 0 : Math.round(v)),
         errs: seCost }],
-      predLines: [{ value: 0, color: "#a8b8c8", label: "冷注意基准" }],
+      predLines: [{ value: 0, color: "#94a3b8", label: "冷注意基准" }],
       ylabel: "ms", title: label + "：情绪价效 × 冲突量",
     });
   } else { const c = $("#c-flk-cost-" + sfx); if (c) c.parentElement.insertAdjacentHTML("beforeend", `<p class="muted">（数据不足）</p>`); }
@@ -715,10 +715,10 @@ function drawFLKCharts(m, sfx, label, rows) {
     chart($("#c-flk-gaze-" + sfx), {
       type: "bar", ymax: 0.6, yfmt: 2, yticks: 3,
       xlabels: ["愤怒侧翼", "中性侧翼"],
-      series: [{ name: "注视占比", color: isReal ? "#00c8f0" : "#d97706",
+      series: [{ name: "注视占比", color: isReal ? "#7c3aed" : "#d97706",
         values: [m.gazeA, m.gazeN].map(v => v == null ? 0 : +v.toFixed(3)),
         errs: ["angry", "neutral"].map(k => seGaze.get(k) || null) }],
-      predLines: [{ value: 0.18, color: "#a8b8c8", label: "冷注意基准" }],
+      predLines: [{ value: 0.18, color: "#94a3b8", label: "冷注意基准" }],
       ylabel: "占比", title: label + "：情绪捕获的眼动证据",
     });
   } else { const c = $("#c-flk-gaze-" + sfx); if (c) { c.parentElement.insertAdjacentHTML("beforeend", `<p class="muted">（${isReal ? "当前数据无眼动记录" : "预期示意未含眼动数据"}）</p>`); c.remove(); } }
@@ -815,13 +815,13 @@ function drawCMCharts(m, sfx, label, rows) {
   chart($("#c-cm-enc-" + sfx), {
     type: "bar", ymin: 0, ymax: +maxE.toFixed(1), yfmt: 2,
     xlabels: CM_ENCS.map(e => CM_ENC_CN[e]),
-    series: [{ name: label + " log₂ 误差", color: isReal ? "#00c8f0" : "#d97706",
+    series: [{ name: label + " log₂ 误差", color: isReal ? "#7c3aed" : "#d97706",
       values: encErr.map(v => v == null ? 0 : +v.toFixed(3)),
       errs: CM_ENCS.map(e => seEnc.get(e) || null) }],
     predLines: [{ values: CM84.map(v => v * maxE / 1.9), color: isReal ? "#d97706" : "#e2e8f0", label: "C&M 1984 预测序" }],
     ylabel: "log₂ 误差", title: label + "：图形知觉层级",
   });
-  const colors = { position: "#00c8f0", length: "#8b3dff", angle: "#d97706", area: "#f5197e" };
+  const colors = { position: "#7c3aed", length: "#06b6d4", angle: "#d97706", area: "#e11d48" };
   chart($("#c-cm-dur-" + sfx), {
     type: "line", ymin: 0, ymax: +maxE.toFixed(1), yfmt: 2,
     xlabels: CM_DURS.map(d => CM_DUR_CN[d]),
@@ -958,8 +958,8 @@ async function renderAIPanel() {
       type: "bar", ymin: 0, ymax: +maxE.toFixed(1), yfmt: 2,
       xlabels: CM_ENCS.map(e => CM_ENC_CN[e]),
       series: [
-        { name: "人类实测", color: "#00c8f0", values: humanErr.map(v => v == null ? 0 : +v.toFixed(2)) },
-        { name: "AI 实测", color: "#f5197e", values: aiErr.map(v => v == null ? 0 : +v.toFixed(2)) },
+        { name: "人类实测", color: "#7c3aed", values: humanErr.map(v => v == null ? 0 : +v.toFixed(2)) },
+        { name: "AI 实测", color: "#e11d48", values: aiErr.map(v => v == null ? 0 : +v.toFixed(2)) },
       ],
       ylabel: "log₂ 误差", title: "图形比例知觉：人类 vs AI",
     });
@@ -990,10 +990,10 @@ function drawClassIB(rows) {
     type: "bar", ymax: 1, yfmt: 2, yticks: 4,
     xlabels: ["不同类意外刺激", "同类意外刺激"],
     series: [
-      { name: "本次实测", color: "#00c8f0",
+      { name: "本次实测", color: "#7c3aed",
         values: [rows ? rate(rows.filter(t => t.stim === "umb")) : null, gooseRows.length ? rate(gooseRows) : null].map(v => v == null ? null : +v.toFixed(3)),
         errs: [se.get("u") || null, se.get("g") || null] },
-      { name: "全班课堂", color: "#a8b8c8",
+      { name: "全班课堂", color: "#94a3b8",
         values: [+(cross.black.rate ?? 0).toFixed(3), +(cross.white.rate ?? 0).toFixed(3)] },
     ],
     ylabel: "察觉率", title: "相似性效应对比：我们（雨伞 vs 鹅形）vs 全班（黑十字 vs 白十字）",
@@ -1020,7 +1020,7 @@ function drawClassFLK(rows) {
     series: [{ name: "冲突量 (ms)", color: "#d97706",
       values: [costN == null ? null : Math.round(costN), costA == null ? null : Math.round(costA), +clsInt.toFixed(1)],
       errs: [seN == null ? null : +seN.toFixed(1), seA == null ? null : +seA.toFixed(1), null] }],
-    predLines: [{ value: 0, color: "#a8b8c8", label: "冷注意基准" }],
+    predLines: [{ value: 0, color: "#94a3b8", label: "冷注意基准" }],
     ylabel: "ms", title: "冲突量对比（不一致 − 一致 RT）",
   });
 }
@@ -1036,10 +1036,10 @@ function drawClassCM(rows) {
     ymax: Math.max(4, Math.ceil((Math.max(...CM_ENCS.map(e => encsCls[e] ? encsCls[e].mean_err : 0), 4) * 1.4))),
     xlabels: CM_ENCS.map(e => CM_ENC_CN[e]),
     series: [
-      { name: "本次实测 (%)", color: "#00c8f0",
+      { name: "本次实测 (%)", color: "#7c3aed",
         values: CM_ENCS.map(e => { const a = ourRows.filter(x => x.enc === e); return a.length ? +mean(a.map(x => x.absErr)).toFixed(2) : null; }),
         errs: CM_ENCS.map(e => se.get(e) || null) },
-      { name: "全班课堂 (%)", color: "#a8b8c8",
+      { name: "全班课堂 (%)", color: "#94a3b8",
         values: CM_ENCS.map(e => encsCls[e] ? +encsCls[e].mean_err.toFixed(2) : null) },
     ],
     ylabel: "绝对误差 %", title: "四编码误差对比：本次实测 vs 全班课堂",

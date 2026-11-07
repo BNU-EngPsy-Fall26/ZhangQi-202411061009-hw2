@@ -8,7 +8,6 @@
 </head>
 <body>
 <div class="aurora"></div>
-<div class="datastream"></div>
 
 <div class="topbar"><div class="topbar-inner">
   <span class="brand">
@@ -32,10 +31,15 @@
         <span class="dot"></span>
         <span>Perceptual Systems Lab · Online</span>
       </div>
-      <h1 class="glitch" data-text="ATTENTION">
-        ATTENTION<br><span class="accent">LAB</span><span class="dim">v2</span>
-      </h1>
+      <div class="hero-title">
+        ATTENTION<br>
+        <span class="accent">LAB</span><span class="dim">.v2</span>
+      </div>
       <div class="hero-zh">注 意 实 验 室</div>
+      <p class="hero-desc" style="max-width:560px">
+        把鼠标移到这片场域上。锐利的只有中心一小块，四周正在变暗——
+        这就是你的中央凹。整个实验做的，就是这件事。
+      </p>
     </div>
     <div class="hud">
       <div class="hud-cell">PROTOCOL<b>3 PARADIGMS</b></div>
@@ -82,9 +86,12 @@
 /* ============================================================
    首页 · 注意力场（Attention Field）
    ------------------------------------------------------------
-   粒子缓慢漂移；鼠标所在处为「中央凹」：只有那圈内清晰、发光、
-   出现结构连线；离得越远越淡越虚。浅色版配色。
-   全部 canvas 绘制，无第三方库；低粒子数保证不占 CPU。
+   刻意做成实验本身的隐喻：
+   · 一群粒子缓慢漂移（场景里的「信息」）
+   · 鼠标所在位置是中央凹：只有那圈内清晰、发光、连线
+   · 离得越远越暗越虚（外周视觉的低分辨）
+   · 点击时中心产生一次「注意投放」脉冲
+   全部 canvas 绘制，无第三方库；低粒子数保证不占 CPU
    ============================================================ */
 (function(){
   const cv = document.getElementById('hero-field');
@@ -96,16 +103,6 @@
   let pts = [];
   const focal = { x: -9999, y: -9999, r: 150, target: 150, pulse: 0 };
   const N = 78;
-
-  /* 赛博朋克霓虹信号色 */
-  const COL = {
-    grn: [0, 184, 132],
-    cyn: [0, 200, 240],
-    amb: [230, 180, 0],
-    mg:  [245, 25, 126],
-    vi:  [139, 61, 255]
-  };
-  const HUES = ['cyn','cyn','mg','vi','grn','amb'];
 
   function resize(){
     const box = cv.parentElement.getBoundingClientRect();
@@ -124,22 +121,28 @@
         y: Math.random() * H,
         vx: (Math.random() - .5) * 0.16,
         vy: (Math.random() - .5) * 0.16,
-        r: 0.9 + Math.random() * 1.6,
-        h: HUES[Math.floor(Math.random() * HUES.length)],
-        tw: Math.random() * Math.PI * 2,
+        r: 0.8 + Math.random() * 1.5,
+        h: Math.random() < .18 ? 'amb' : (Math.random() < .5 ? 'grn' : 'cyn'),
+        tw: Math.random() * Math.PI * 2,          // 闪烁相位
         tws: 0.006 + Math.random() * 0.014,
       });
     }
   }
 
-  /* 赛博朋克霓虹信号色（已在上方定义 COL / HUES） */
+  const COL = {
+    grn: [38, 255, 164],
+    cyn: [62, 225, 255],
+    amb: [255, 180, 84]
+  };
 
-  function draw(){
+  function draw(t){
     ctx.clearRect(0, 0, W, H);
 
+    // 中央凹半径平滑跟随（避免跳变）
     focal.r += (focal.target - focal.r) * 0.09;
     if (focal.pulse > 0) focal.pulse *= 0.955;
 
+    // 粒子漂移
     for (const p of pts){
       if (!reduce){
         p.x += p.vx; p.y += p.vy;
@@ -149,99 +152,77 @@
       p.tw += p.tws;
     }
 
+    // 中心-外周：计算每个粒子的「清晰度」
     const d2f = p => Math.hypot(p.x - focal.x, p.y - focal.y);
     const R = focal.r + focal.pulse * 90;
 
-    /* ① 结构连线：只在中央凹内，青品渐变 */
-    ctx.lineWidth = 0.8;
+    // ① 粒子之间的连线（只在中央凹内，模拟可分辨的结构）
+    ctx.lineWidth = 0.6;
     for (let i = 0; i < pts.length; i++){
       for (let j = i + 1; j < pts.length; j++){
         const a = pts[i], b = pts[j];
-        const d = Math.hypot(a.x - b.x, a.y - b.y);
-        if (d > 78) continue;
-        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-        const fd = Math.hypot(mx - focal.x, my - focal.y);
-        if (fd > R) continue;
-        const al = (1 - fd / R) * (1 - d / 78) * 0.42;
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const d = Math.hypot(dx, dy);
+        if (d > 74) continue;
+        const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        const fd = Math.hypot(mid.x - focal.x, mid.y - focal.y);
+        if (fd > R) continue;                        // 外围不画线
+        const focus = 1 - fd / R;                    // 越近越亮
+        const prox  = 1 - d / 74;
+        const al = focus * prox * 0.42;
         if (al <= 0.01) continue;
-        // 靠得最近的用青色，稍远用品红
-        const g = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
-        g.addColorStop(0, `rgba(0,200,240,${al.toFixed(3)})`);
-        g.addColorStop(1, `rgba(245,25,126,${(al * .75).toFixed(3)})`);
-        ctx.strokeStyle = g;
+        ctx.strokeStyle = `rgba(122,200,215,${al.toFixed(3)})`;
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
       }
     }
 
-    /* ② 粒子本体：多层霓虹光晕 */
+    // ② 粒子本体
     for (const p of pts){
       const fd = d2f(p);
-      const focus = fd <= R ? 1 - fd / R : 0;
-      const outer = fd <= R ? 0 : Math.max(0, 1 - (fd - R) / (R * 2.0));
-      const glow = Math.max(focus, outer * 0.28);
-      const twinkle = 0.60 + 0.40 * Math.sin(p.tw);
+      const focus = fd <= R ? 1 - fd / R : 0;        // 中央凹内清晰
+      const outer = fd <= R ? 0 : Math.max(0, 1 - (fd - R) / (R * 2.2)); // 外周余晖
+      const glow = Math.max(focus, outer * 0.42);
+      const twinkle = 0.62 + 0.38 * Math.sin(p.tw);
       const al = Math.min(1, glow * twinkle);
       if (al < 0.02) continue;
       const c = COL[p.h];
-      const size = p.r * (0.55 + glow * 1.0);
+      const size = p.r * (0.55 + glow * 0.85);
 
-      // 外圈大光晕
-      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size * 6);
-      g.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},${(al * .34).toFixed(3)})`);
-      g.addColorStop(0.45, `rgba(${c[0]},${c[1]},${c[2]},${(al * .10).toFixed(3)})`);
+      // 光晕
+      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size * 5.5);
+      g.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},${(al * .42).toFixed(3)})`);
       g.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},0)`);
       ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(p.x, p.y, size * 6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, size * 5.5, 0, Math.PI * 2); ctx.fill();
 
-      // 核心亮点
+      // 核心
       ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${al.toFixed(3)})`;
       ctx.beginPath(); ctx.arc(p.x, p.y, size, 0, Math.PI * 2); ctx.fill();
-
-      // 强聚焦时加白芯
-      if (focus > 0.55){
-        ctx.fillStyle = `rgba(255,255,255,${(focus * 0.75).toFixed(3)})`;
-        ctx.beginPath(); ctx.arc(p.x, p.y, size * 0.45, 0, Math.PI * 2); ctx.fill();
-      }
     }
 
-    /* ③ 中央凹：青品双环 + 旋转刻度 */
+    // ③ 中央凹光圈（极细的准星环）
     if (focal.x > -1000){
-      const rr = R * 1.30;
-
-      ctx.strokeStyle = `rgba(0,200,240,${(0.18 + focal.pulse * 0.32).toFixed(3)})`;
-      ctx.lineWidth = 1.2;
+      const rr = R * 1.28;
+      ctx.strokeStyle = `rgba(38,255,164,${(0.10 + focal.pulse * 0.22).toFixed(3)})`;
+      ctx.lineWidth = 1;
       ctx.beginPath(); ctx.arc(focal.x, focal.y, rr, 0, Math.PI * 2); ctx.stroke();
 
-      ctx.strokeStyle = `rgba(245,25,126,${(0.10 + focal.pulse * 0.24).toFixed(3)})`;
-      ctx.lineWidth = 0.8;
-      ctx.beginPath(); ctx.arc(focal.x, focal.y, rr * 0.84, 0, Math.PI * 2); ctx.stroke();
-
-      // 旋转的四向刻度
-      const spin = performance.now() * 0.0009;
-      ctx.strokeStyle = `rgba(139,61,255,${(0.42 + focal.pulse * 0.35).toFixed(3)})`;
-      ctx.lineWidth = 1.4;
+      // 四个刻度
+      ctx.strokeStyle = `rgba(38,255,164,${(0.24 + focal.pulse * 0.3).toFixed(3)})`;
       for (let k = 0; k < 4; k++){
-        const a = k * Math.PI / 2 + spin;
-        const x1 = focal.x + Math.cos(a) * (rr + 2);
-        const y1 = focal.y + Math.sin(a) * (rr + 2);
-        const x2 = focal.x + Math.cos(a) * (rr + 11);
-        const y2 = focal.y + Math.sin(a) * (rr + 11);
+        const a = k * Math.PI / 2 + Math.PI / 4;
+        const x1 = focal.x + Math.cos(a) * (rr + 3);
+        const y1 = focal.y + Math.sin(a) * (rr + 3);
+        const x2 = focal.x + Math.cos(a) * (rr + 9);
+        const y2 = focal.y + Math.sin(a) * (rr + 9);
         ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
       }
-      // 十字准线（极淡）
-      ctx.strokeStyle = `rgba(0,200,240,${(0.06 + focal.pulse * 0.14).toFixed(3)})`;
-      ctx.lineWidth = 0.7;
-      ctx.beginPath();
-      ctx.moveTo(focal.x - rr * 1.7, focal.y); ctx.lineTo(focal.x - rr * 1.1, focal.y);
-      ctx.moveTo(focal.x + rr * 1.1, focal.y); ctx.lineTo(focal.x + rr * 1.7, focal.y);
-      ctx.moveTo(focal.x, focal.y - rr * 1.7); ctx.lineTo(focal.x, focal.y - rr * 1.1);
-      ctx.moveTo(focal.x, focal.y + rr * 1.1); ctx.lineTo(focal.x, focal.y + rr * 1.7);
-      ctx.stroke();
     }
 
     requestAnimationFrame(draw);
   }
 
+  // 鼠标/触摸 → 中央凹
   function move(e){
     const r = cv.getBoundingClientRect();
     const p = e.touches ? e.touches[0] : e;
@@ -257,6 +238,7 @@
 
   function boot(){
     resize(); seed(); requestAnimationFrame(draw);
+    // 开场时中央凹停在标题处，做一个「自检」式扫过
     focal.x = W * 0.30; focal.y = H * 0.44;
     if (!reduce){
       setTimeout(() => { focal.target = 210; }, 350);
@@ -267,7 +249,7 @@
   let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { resize(); seed(); }, 180); });
 })();
 
-/* 顶部时钟 */
+/* 顶部时钟（像仪器一样走） */
 (function(){
   const el = document.getElementById('st-clock');
   if (!el) return;
