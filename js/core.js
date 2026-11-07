@@ -406,8 +406,8 @@ function bindConsentFlow(onStart) {
   });
 }
 
-/* ---------- 装饰 SVG（温暖黏土几何，静态无动画；永不进入刺激画布） ---------- */
+/* ---------- 装饰 SVG（简约几何线条，静态无动画；永不进入刺激画布） ---------- */
 const DECO_SVG = {
-  tl: `<svg width="92" height="92" viewBox="0 0 92 92"><defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f9b184"/><stop offset="1" stop-color="#e8734a"/></linearGradient></defs><rect x="12" y="12" width="44" height="44" rx="16" fill="url(#g1)" opacity=".85"/><rect x="15" y="15" width="38" height="16" rx="8" fill="#ffffff" opacity=".38"/><circle cx="60" cy="60" r="18" fill="#ffd9b8" opacity=".9"/><circle cx="54" cy="54" r="5" fill="#ffffff" opacity=".55"/></svg>`,
-  br: `<svg width="104" height="104" viewBox="0 0 104 104"><defs><linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6c39a"/><stop offset="1" stop-color="#e89b6a"/></linearGradient></defs><circle cx="58" cy="46" r="30" fill="url(#g2)" opacity=".82"/><ellipse cx="48" cy="34" rx="11" ry="7" fill="#ffffff" opacity=".45"/><rect x="24" y="64" width="34" height="34" rx="12" fill="#ffe9d2" opacity=".9"/><rect x="28" y="68" width="26" height="11" rx="5.5" fill="#ffffff" opacity=".55"/></svg>`,
+  tl: `<svg width="120" height="120" viewBox="0 0 120 120" fill="none" stroke="#4f46e5" stroke-width="1"><circle cx="30" cy="30" r="20"/><circle cx="30" cy="30" r="10"/><line x1="10" y1="80" x2="80" y2="80"/><line x1="25" y1="70" x2="25" y2="90"/><line x1="45" y1="70" x2="45" y2="90"/><line x1="65" y1="70" x2="65" y2="90"/></svg>`,
+  br: `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" stroke="#4f46e5" stroke-width="1"><rect x="20" y="20" width="40" height="40" rx="8"/><circle cx="70" cy="70" r="15"/><line x1="40" y1="60" x2="40" y2="85"/><line x1="55" y1="75" x2="25" y2="75"/></svg>`,
 };
