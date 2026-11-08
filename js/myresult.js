@@ -1,26 +1,27 @@
 /* ============================================================
-   myresult.js —— 被试个人结果页（我的结果 + 全班对比）
+   myresult.js —— 被试个人结果页（我的结果 + 全班基线对比）
    ------------------------------------------------------------
-   实验结束页调用 renderMyResult(实验键)，渲染为：
-     ┌ 本人在该实验的关键读数（KPI）
-     ├ 我的结果 vs 全班（分组柱：每个条件两根柱）
-     └ 简短的定性解读（比全班更快/更准/更易察觉…）
-   全班数据来自 CLASSDATA.summary()（课程注意实验室，登录后读取）。
+   数据来源（两路）：
+   ① 我的结果：本次实验的 Collector.trials
+   ② 全班基线：课程注意实验室「我的结果」页所用的 /api/class/summary
+      —— 对应课程三个原始实验（专注计数 / 速测 flanker / 估一估 cm），
+         登录后读取，代表全班同学在该范式上的平均水平
+   对比方式：我的条件均值 vs 全班对应条件的均值，分组柱状图 + 一句话解读
    ============================================================ */
 "use strict";
 
-/* 课程实验代号映射 */
+/* 课程实验代号映射（与课程站 EXPS 注册表一致） */
 const CLASS_EXP = {
-  ib: "inattention",      // 非注意盲（十字计数范式）
-  flanker: "flanker",     // 经典 Flanker
-  cm: "cm",               // C&M 图形知觉
+  ib: "inattention",      // W5 · 专注任务（默数目标次数）
+  flanker: "flanker",     // W6 · 冲突（相邻位置 flanker 速测）
+  cm: "cm",               // W7 · 图形比例估计（估一估）
 };
 
 /* ---------- 迷你柱状图（双系列：我 / 全班） ---------- */
 function miniChart(canvas, cfg) {
   if (!canvas) return;
   const dpr = window.devicePixelRatio || 1;
-  const H = parseInt(canvas.style.height) || 190;
+  const H = parseInt(canvas.style.height) || 200;
   const W = canvas.clientWidth || 340;
   canvas.width = W * dpr; canvas.height = H * dpr;
   canvas.style.height = H + "px";
@@ -28,27 +29,26 @@ function miniChart(canvas, cfg) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
 
-  const L = 42, R = 10, T = 30, B = 34;
+  const L = 46, R = 12, T = 34, B = 40;
   const pw = W - L - R, ph = H - T - B;
   const ymin = cfg.ymin == null ? 0 : cfg.ymin;
-  const ymax = cfg.ymax;
+  const ymax = cfg.ymax || 1;
   const y2p = v => T + ph - (v - ymin) / (ymax - ymin) * ph;
   const mono = '10px "JetBrains Mono", ui-monospace, monospace';
 
-  // 网格
-  const ticks = 4;
-  for (let i = 0; i <= ticks; i++) {
-    const v = ymin + (ymax - ymin) * i / ticks, y = y2p(v);
-    ctx.strokeStyle = "rgba(122,167,190,.18)"; ctx.lineWidth = 1;
+  // 网格 + y 轴刻度
+  for (let i = 0; i <= 4; i++) {
+    const v = ymin + (ymax - ymin) * i / 4, y = y2p(v);
+    ctx.strokeStyle = "rgba(122,167,190,.16)"; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(W - R, y); ctx.stroke();
     ctx.fillStyle = "#8a9db0"; ctx.font = mono; ctx.textAlign = "right";
     ctx.fillText(+v.toFixed(cfg.yfmt === 1 ? 0 : 2), L - 6, y + 3.5);
   }
 
-  // 柱
+  // 柱体
   const n = cfg.labels.length, bw = pw / n;
   cfg.series.forEach((s, si) => {
-    const w = Math.min(26, (bw - 10) / cfg.series.length);
+    const w = Math.min(24, (bw - 12) / cfg.series.length);
     s.values.forEach((v, i) => {
       if (v == null || isNaN(v)) return;
       const x = L + bw * i + bw / 2 - (cfg.series.length * w) / 2 + si * w + w / 2;
@@ -56,52 +56,67 @@ function miniChart(canvas, cfg) {
       ctx.fillStyle = s.color;
       ctx.fillRect(x - w / 2, yTop, w, T + ph - yTop);
       ctx.fillStyle = "#c9d6e0"; ctx.font = mono; ctx.textAlign = "center";
-      ctx.fillText(+v.toFixed(cfg.yfmt === 1 ? 0 : 2), x, yTop - 4);
+      ctx.fillText(+v.toFixed(cfg.yfmt === 1 ? 0 : 2), x, Math.max(yTop - 4, T + 9));
     });
   });
 
-  // x 轴标签
+  // x 轴标签（自适应截断）
   ctx.fillStyle = "#9fb2c2"; ctx.font = mono; ctx.textAlign = "center";
-  cfg.labels.forEach((t, i) => ctx.fillText(t, L + bw * i + bw / 2, H - 14));
+  cfg.labels.forEach((t, i) => {
+    const maxW = Math.max(30, bw - 8);
+    let lab = String(t);
+    while (ctx.measureText(lab).width > maxW && lab.length > 2) lab = lab.slice(0, -1);
+    if (lab !== String(t)) lab += "…";
+    ctx.fillText(lab, L + bw * i + bw / 2, H - 16);
+  });
 
   // 图例
   let lx = L;
   cfg.series.forEach(s => {
     ctx.fillStyle = s.color;
-    ctx.fillRect(lx, 12, 8, 8);
+    ctx.fillRect(lx, 12, 9, 9);
     ctx.fillStyle = "#9fb2c2"; ctx.font = mono; ctx.textAlign = "left";
-    ctx.fillText(s.name, lx + 12, 19.5);
-    lx += 14 + ctx.measureText(s.name).width + 16;
+    ctx.fillText(s.name, lx + 13, 20);
+    lx += 16 + ctx.measureText(s.name).width + 18;
   });
 }
 
-/* ---------- 各实验的「我 vs 全班」配置 ---------- */
+/* ---------- 三个实验的对比构建器（全部对接课程真实字段） ---------- */
+
+/** 实验1 非注意盲：我的速度条件察觉率 vs 全班整体察觉率基线 */
 function buildIBCompare(trials, cls) {
   const rate = a => a.length ? a.filter(t => t.noticed === 1).length / a.length : null;
-  const mine = {
-    fast: rate(trials.filter(t => t.speed === "fast")),
-    slow: rate(trials.filter(t => t.speed === "slow")),
-    static: rate(trials.filter(t => t.speed === "static")),
-  };
-  // 全班（十字计数）：黑白十字的察觉率映射到快/慢/静三档不可行，
-  // 因此用「异类 vs 同类」维度对比（与实验逻辑一致）
-  let clsSeries = [null, null, null];
-  let labels = ["快速", "慢速", "静止"];
-  let mySeries = [mine.fast, mine.slow, mine.static];
+  const myRates = [
+    rate(trials.filter(t => t.speed === "fast")),
+    rate(trials.filter(t => t.speed === "slow")),
+    rate(trials.filter(t => t.speed === "static")),
+  ];
+  // 全班基线：课程「专注计数」实验的整体察觉率（十字计数范式）
+  let clsRate = null, clsN = null;
   if (cls && cls.paradigms && cls.paradigms.shapes) {
-    const m = cls.paradigms.shapes.marginals.cross;
-    // 全班只有「黑十字/白十字」两档，这里作为整体参考线呈现
-    const clsAvg = ((m.black.rate || 0) + (m.white.rate || 0)) / 2;
-    clsSeries = [clsAvg, clsAvg, clsAvg];
+    const sh = cls.paradigms.shapes;
+    const m = sh.marginals && sh.marginals.cross;
+    if (m) {
+      const b = m.black && m.black.rate, w = m.white && m.white.rate;
+      const vals = [b, w].filter(v => v != null);
+      if (vals.length) clsRate = vals.reduce((a, b2) => a + b2, 0) / vals.length;
+      clsN = sh.n;
+    }
   }
   return {
-    labels, mySeries, clsSeries,
+    labels: ["快速", "慢速", "静止"],
+    mySeries: myRates,
+    clsSeries: [clsRate, clsRate, clsRate],   // 基线是整体察觉率，各条件画同一参考线
     ymax: 1, yfmt: 2,
-    title: "察觉率：我 vs 全班平均",
-    note: cls ? `全班（${cls.paradigms.shapes.n || "?"} 人次，十字计数范式）整体察觉率约 ${((((cls.paradigms.shapes.marginals.cross.black.rate||0)+(cls.paradigms.shapes.marginals.cross.white.rate||0))/2)*100).toFixed(0)}%；范式不同，仅作量级参考。` : "",
+    title: "察觉率：我的三种速度条件 vs 全班基线",
+    note: clsRate != null
+      ? `全班基线（课程「专注计数」原始实验，n = ${clsN || "?"}）整体察觉率 ${(clsRate * 100).toFixed(0)}%。`
+        + `该实验用十字计数范式，与我的传球计数范式不同，仅作量级参照；重点看我的三条柱之间的差异。`
+      : "未能读取全班基线数据。",
   };
 }
 
+/** 实验2 Flanker：我的四条件冲突量 vs 全班三条件干扰量 */
 function buildFLKCompare(trials, cls) {
   const rt = (emo, cong) => {
     const a = trials.filter(t => t.flankerEmo === emo && t.congruent === cong && t.correct === 1);
@@ -110,23 +125,32 @@ function buildFLKCompare(trials, cls) {
   const nC = rt("neutral", 1), nI = rt("neutral", 0), aC = rt("angry", 1), aI = rt("angry", 0);
   const myCostN = (nC != null && nI != null) ? nI - nC : null;
   const myCostA = (aC != null && aI != null) ? aI - aC : null;
-  let clsN = null, clsA = null;
+
+  // 全班：课程 flanker 的 interference = incongruent − congruent
+  let clsInt = null, clsN = null;
   if (cls && cls.conds) {
-    // 全班只有 congruent/incongruent/neutral 三格（无情绪维度）
-    clsN = (cls.conds.incongruent && cls.conds.congruent)
-      ? cls.conds.incongruent.mean_rt - cls.conds.congruent.mean_rt : null;
+    const c = cls.conds;
+    if (c.incongruent && c.congruent && c.incongruent.mean_rt != null && c.congruent.mean_rt != null) {
+      clsInt = c.incongruent.mean_rt - c.congruent.mean_rt;
+    }
+    clsN = cls.n;
   }
   return {
-    labels: ["中性侧翼", "愤怒侧翼", "全班·经典"],
+    labels: ["我·中性侧翼", "我·愤怒侧翼", "全班·经典"],
     mySeries: [myCostN, myCostA, null],
-    clsSeries: [null, null, clsN],
-    ymax: Math.max(Math.abs(myCostN || 0), Math.abs(myCostA || 0), Math.abs(clsN || 0), 40) * 1.35,
+    clsSeries: [null, null, clsInt],
+    ymax: Math.max(Math.abs(myCostN || 0), Math.abs(myCostA || 0), Math.abs(clsInt || 0), 40) * 1.35,
     yfmt: 1,
     title: "冲突量（不一致 − 一致，ms）：我 vs 全班",
-    note: clsN != null ? `全班经典 Flanker 干扰量 ${clsN.toFixed(0)}ms（落在 Eriksen 1974 的 20–60ms 区间）；我的中性/愤怒侧翼冲突量见左两柱。` : "",
+    note: clsInt != null
+      ? `全班基线（课程 flanker 速测，n = ${clsN || "?"}）干扰量 ${clsInt.toFixed(1)} ms`
+        + `（落在 Eriksen 与 Eriksen 1974 报告的 20–60 ms 区间）。`
+        + `我的两柱分别对应中性侧翼与愤怒侧翼，可与基线直接比较。`
+      : "未能读取全班基线数据。",
   };
 }
 
+/** 实验3 C&M：我的四编码误差 vs 全班四编码误差 */
 function buildCMCompare(trials, cls) {
   const encs = ["position", "length", "angle", "area"];
   const cn = { position: "位置", length: "长度", angle: "角度", area: "面积" };
@@ -134,19 +158,26 @@ function buildCMCompare(trials, cls) {
     const a = trials.filter(t => t.enc === e && t.absErr != null);
     return a.length ? a.reduce((s, x) => s + x.absErr, 0) / a.length : null;
   });
-  let clsErr = [null, null, null, null];
-  if (cls && cls.encs) clsErr = encs.map(e => cls.encs[e] ? cls.encs[e].mean_err : null);
+  let clsErr = [null, null, null, null], clsN = null;
+  if (cls && cls.encs) {
+    clsErr = encs.map(e => (cls.encs[e] && cls.encs[e].mean_err != null) ? cls.encs[e].mean_err : null);
+    clsN = cls.n;
+  }
   const all = [...myErr, ...clsErr].filter(v => v != null);
   return {
     labels: encs.map(e => cn[e]),
-    mySeries: myErr, clsSeries: clsErr,
+    mySeries: myErr,
+    clsSeries: clsErr,
     ymax: Math.max(...all, 4) * 1.3, yfmt: 1,
-    title: "估计绝对误差（%）：我 vs 全班",
-    note: cls && cls.encs ? "全班数据来自课程 C&M 实验（同口径：百分比绝对误差），可与我的四编码误差直接比较。" : "",
+    title: "估计绝对误差（%）：我的四编码 vs 全班",
+    note: (clsN != null)
+      ? `全班基线（课程「估一估」原始实验，n = ${clsN}）四编码平均绝对误差。`
+        + `口径一致（百分比绝对误差），可直接逐编码比较我的误差位置。`
+      : "未能读取全班基线数据。",
   };
 }
 
-/* ---------- 主入口：渲染个人结果卡片 ---------- */
+/* ---------- 主入口 ---------- */
 async function renderMyResult(expKey, trials, hostEl) {
   const host = hostEl || document.getElementById("my-result");
   if (!host) return;
@@ -160,37 +191,35 @@ async function renderMyResult(expKey, trials, hostEl) {
       <div id="mr-kpi" class="kpi-row"></div>
       <div class="chart-box" style="margin:14px 0 0">
         <h3 id="mr-title">与全班对比</h3>
-        <canvas id="mr-chart" style="height:200px"></canvas>
+        <canvas id="mr-chart" style="height:210px"></canvas>
         <p class="muted" id="mr-note"></p>
       </div>
       <p class="muted" id="mr-loading" style="margin-top:10px">正在读取全班数据…</p>
     </div>`;
 
-  // 数据来源标签
+  // 数据来源徽章
   const srcEl = document.getElementById("mr-src");
   if (srcEl) {
     const s = (typeof GZ !== "undefined") ? GZ.source : "none";
     srcEl.textContent = s === "eye" ? "眼动数据" : s === "mouse" ? "鼠标追踪数据" : "行为数据";
   }
 
-  // KPI
+  // 个人 KPI
   const kpi = document.getElementById("mr-kpi");
-  let cmp;
   if (expKey === "ib") {
-    const rate = a => a.length ? a.filter(t => t.noticed === 1).length / a.length : null;
     const n = trials.filter(t => t.noticed === 1).length;
     const errs = trials.map(t => t.countErr).filter(v => v != null);
     kpi.innerHTML = `
       <div class="kpi"><div class="v">${n}/${trials.length}</div><div class="k">察觉到的轮次</div></div>
-      <div class="kpi"><div class="v">${(rate(trials) * 100).toFixed(0)}%</div><div class="k">察觉率</div></div>
+      <div class="kpi"><div class="v">${trials.length ? (n / trials.length * 100).toFixed(0) : 0}%</div><div class="k">察觉率</div></div>
       <div class="kpi"><div class="v">${errs.length ? (errs.reduce((a, b) => a + b, 0) / errs.length).toFixed(1) : "—"}</div><div class="k">平均计数误差</div></div>`;
   } else if (expKey === "flanker") {
     const ok = trials.filter(t => t.correct === 1);
     const acc = trials.length ? trials.filter(t => t.correct === 1).length / trials.length : 0;
-    const meanRT = ok.length ? ok.reduce((s, x) => s + x.rt, 0) / ok.length : null;
+    const mrt = ok.length ? ok.reduce((s, x) => s + x.rt, 0) / ok.length : null;
     kpi.innerHTML = `
       <div class="kpi"><div class="v">${(acc * 100).toFixed(0)}%</div><div class="k">正确率</div></div>
-      <div class="kpi"><div class="v">${meanRT ? Math.round(meanRT) : "—"}</div><div class="k">平均反应时 (ms)</div></div>
+      <div class="kpi"><div class="v">${mrt ? Math.round(mrt) : "—"}</div><div class="k">平均反应时 (ms)</div></div>
       <div class="kpi"><div class="v">${trials.length}</div><div class="k">有效试次</div></div>`;
   } else {
     const errs = trials.map(t => t.absErr).filter(v => v != null);
@@ -201,13 +230,13 @@ async function renderMyResult(expKey, trials, hostEl) {
       <div class="kpi"><div class="v">${trials.length}</div><div class="k">有效试次</div></div>`;
   }
 
-  // 全班对比
+  // 读全班基线（课程「我的结果」页同源接口）
   let cls = null;
   try { cls = await CLASSDATA.summary(CLASS_EXP[expKey]); } catch (_) { }
 
-  if (expKey === "ib") cmp = buildIBCompare(trials, cls);
-  else if (expKey === "flanker") cmp = buildFLKCompare(trials, cls);
-  else cmp = buildCMCompare(trials, cls);
+  const cmp = expKey === "ib" ? buildIBCompare(trials, cls)
+    : expKey === "flanker" ? buildFLKCompare(trials, cls)
+      : buildCMCompare(trials, cls);
 
   const load = document.getElementById("mr-loading");
   if (load) load.remove();
@@ -218,7 +247,7 @@ async function renderMyResult(expKey, trials, hostEl) {
   if (note) {
     note.innerHTML = cls
       ? (cmp.note || "")
-      : "未能读取全班数据（可能离线或接口暂不可用）。你的个人结果已完整记录，不影响作业数据。";
+      : "未能读取全班基线数据（可能离线或接口暂不可用）。你的个人结果已完整记录并上传。";
   }
 
   miniChart(document.getElementById("mr-chart"), {

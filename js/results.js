@@ -394,13 +394,30 @@ function chart(canvas, cfg) {
 /* ---------- 全局数据 ---------- */
 const RES = { cm: [], flk: [], ib: [], pred: null, ai: null, class: null };
 
-/** 加载全班课堂数据快照（data/class_summary.json，来自课程注意实验室 /api/class/summary，
- *  2026-11-06 抓取；本地文件，离线可用）。失败时静默降级（面板隐藏）。 */
+/** 加载全班课堂数据：优先实时接口（课程「我的结果」页同源），失败回退本地快照。
+ *  接口对应课程三个原始实验：inattention（专注计数）/ flanker（速测）/ cm（估一估）。 */
 async function loadClassData() {
+  // ① 先用本地快照立即渲染（离线也能显示）
   try {
-    const j = await fetch("data/class_summary.json").then(r => r.json());
+    const r = await fetch("data/class_summary.json", { cache: "no-store" });
+    const txt = (await r.text()).replace(/^\uFEFF/, "");
+    const j = JSON.parse(txt);
     RES.class = (j && j.exps) ? j : null;
   } catch (e) { RES.class = null; }
+
+  // ② 再尝试用实时接口刷新（拿到最新全班数据）
+  if (typeof CLASSDATA !== "undefined") {
+    try {
+      const ids = ["inattention", "flanker", "cm"];
+      const got = await Promise.all(ids.map(id => CLASSDATA.summary(id)));
+      if (got.some(g => g)) {
+        const exps = {};
+        ids.forEach((id, i) => { if (got[i]) exps[id] = got[i]; });
+        // 合并：实时数据优先，缺失的用快照补齐
+        RES.class = { source: CLASSDATA.LAB, exps: Object.assign({}, (RES.class && RES.class.exps) || {}, exps) };
+      }
+    } catch (e) { /* 静默：保留快照 */ }
+  }
 }
 
 function ingest(rows) {
@@ -1414,28 +1431,43 @@ window.addEventListener("DOMContentLoaded", () => {
   // 全班课堂数据（本地快照）异步加载，完成后重渲染出现对比面板
   loadClassData().then(() => renderAll());
   $("#btn-import").addEventListener("click", () => $("#file-in").click());
-  // 从课程收数接口读取本项目的全体匿名数据（GET /api/hw2/data，无需密钥）
-  $("#btn-fetch-api").addEventListener("click", async () => {
+
+  /** 从课程收数接口读取本项目收集到的全部被试数据（无需密钥） */
+  async function fetchProjectData(silent) {
     const project = CONFIG.PROJECT_CODE;
     if (!project || project === "XXXXXX") {
-      $("#data-status").innerHTML = `<span class="badge err">未配置项目码（config.js）</span>`;
-      return;
+      if (!silent) $("#data-status").innerHTML = `<span class="badge err">未配置项目码（config.js）</span>`;
+      return 0;
     }
-    $("#data-status").textContent = "正在从收数接口读取…";
+    if (!silent) $("#data-status").textContent = "正在从收数接口读取…";
     let n = 0, fails = 0;
-    for (const exp of ["ib_multistim", "flanker_emotion", "cm_perception"]) {
+    const expMap = { ib_multistim: "ib", flanker_emotion: "flanker", cm_perception: "cm" };
+    const summary = [];
+    for (const exp of Object.keys(expMap)) {
       try {
-        const j = await fetch(`${CONFIG.API_DATA}?project=${project}&experiment=${exp}`).then(r => r.json());
-        (j.records || []).forEach(rec => {
+        const r = await fetch(`${CONFIG.API_DATA}?project=${project}&experiment=${exp}`);
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const j = await r.json();
+        const recs = j.records || [];
+        const pids = new Set(recs.map(x => x.participant));
+        summary.push(`${expMap[exp]} ${pids.size} 人`);
+        recs.forEach(rec => {
           n += ingest((rec.trials || []).map(t => Object.assign({}, t, { pid: rec.participant })));
         });
-      } catch (e) { fails++; }
+      } catch (e) { fails++; summary.push(`${expMap[exp]} 失败`); }
     }
-    $("#data-status").innerHTML = n
-      ? `<span class="badge ok">已从收数接口读取 ${n} 行${fails ? "（部分实验读取失败）" : ""}——左实测 / 右预期，自动分析报告已生成</span>`
-      : `<span class="badge err">接口暂无数据（先让被试完成实验，或核对项目码 ${project}）</span>`;
-    renderAll();
-  });
+    if (n) {
+      $("#data-status").innerHTML = `<span class="badge ok">已读取本项目 ${n} 行数据（${summary.join(" · ")}）`
+        + `${fails ? "（部分实验读取失败）" : ""}——左实测 / 右预期</span>`;
+      renderAll();
+    } else if (!silent) {
+      $("#data-status").innerHTML = `<span class="badge err">接口暂无数据（先让被试完成实验，或核对项目码 ${project}）</span>`;
+    }
+    return n;
+  }
+  $("#btn-fetch-api").addEventListener("click", () => fetchProjectData(false));
+  // 进入页面自动尝试读取一次（静默，失败不打扰）
+  setTimeout(() => fetchProjectData(true), 600);
   $("#file-in").addEventListener("change", async e => {
     let n = 0;
     for (const f of e.target.files) {
