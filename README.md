@@ -18,6 +18,56 @@
 
 含知情同意 → 指导语 → 练习 → 正式试次 → 结果页五个环节，被试仅使用匿名编号。
 
+## 文件结构
+
+```
+hw2/
+├── index.html                  首页（实验入口、被试编号、完成进度）
+├── results.html                结果页（实测 vs 预期、推断统计、全班对比、人机对比）
+├── 启动实验.bat                 Windows 启动脚本（本地 HTTPS 服务器，眼动可用）
+├── 启动实验.command             macOS 启动脚本（LF 换行，双击直接运行）
+│
+├── experiments/                三个实验的入口页面
+│   ├── ib.html                 实验 1 · 非注意盲
+│   ├── flanker.html            实验 2 · 情绪 Flanker
+│   └── cm.html                 实验 3 · 图形比例估计
+│
+├── js/
+│   ├── config.js               ★ 项目码（6DKEZT）与收数接口地址
+│   ├── core.js                 共享库：会话/编号、知情同意、收数、眼动与鼠标追踪、校准验证
+│   ├── exp_ib.js               实验 1 逻辑：6 轮计划表、动画、四级迫选
+│   ├── exp_flanker.js          实验 2 逻辑：试次生成、按键判定、ROI 眼动
+│   ├── exp_cm.js               实验 3 逻辑：48→96 试次、掩蔽、滑块作答
+│   ├── cm_stimuli.js           C&M 刺激几何定义（与 AI 刺激逐像素一致）
+│   ├── results.js              统计引擎与图表（t / 卡方 / Cochran Q / Friedman / 二项）
+│   ├── myresult.js             被试个人结果页（我的结果 + 全班基线对比）
+│   ├── classdata.js            全班数据读取（同源快照优先，规避 CORS）
+│   ├── ai_fallback.js          人机对比的内置兜底数据
+│   └── vendor/webgazer.js      自托管 WebGazer（眼动，本地处理不上传视频）
+│
+├── data/
+│   └── class_summary.json      全班课堂数据快照（课程 /api/class/summary，预抓取）
+│
+├── ai/
+│   ├── cm_prompts.json         16 道题的标准提示词与真值
+│   ├── ai_results.json         大模型作答结果（GLM-5.3 / Grok-4.7 双跑 + 无效评估记录）
+│   └── cm_stimuli_png/         16 张 AI 版刺激图（C01–C16）
+│
+├── stimuli/
+│   ├── faces/                  12 张面孔位图（A*=愤怒，N*=中性，灰度化使用）
+│   └── players/                4 个透明角色精灵（警长 / 巫医 / 金币鹅 / 枫叶鹅）
+│
+├── css/style.css               全站样式（暗色观测终端风格；刺激画布区零装饰）
+├── tools/                      开发期脚本
+│   ├── serve.ps1               Windows 本地 HTTPS 服务器
+│   ├── render_ai_stimuli.ps1   AI 刺激图离线渲染
+│   ├── cutout_players.ps1      角色卡抠图（泛洪去底 + 最大连通域 + 边缘羽化）
+│   └── temp_http.ps1           临时 HTTP 服务器（备用）
+│
+├── .gitattributes              强制 *.command 用 LF（保证 macOS 可执行）
+└── .gitignore                  排除系统与编辑器杂项文件
+```
+
 ## 数据提交
 
 - **项目码 `6DKEZT`**（2026-11-06 于[注意实验室 /hw2](https://attention-lab-production.up.railway.app/hw2) 创建），已写入 `js/config.js`。
