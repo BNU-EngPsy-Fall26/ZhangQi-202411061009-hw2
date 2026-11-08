@@ -603,3 +603,14 @@ hr{border:none;border-top:1px solid var(--line);margin:26px 0}
 .exp-card.is-done .foot .go{color:var(--grn)}
 .exp-card.is-done .exp-head .idx::after{content:' ?';color:var(--grn);font-size:11px}
 @media (max-width:720px){.idbar{gap:10px}.idbar-main{gap:10px}}
+
+/* ---------- 虚拟观测者图标 ---------- */
+#observer{position:fixed;left:0;top:0;z-index:55;pointer-events:auto;cursor:pointer;
+  filter:drop-shadow(0 0 18px rgba(38,255,164,.28));
+  transition:opacity .3s,filter .3s;
+  will-change:transform}
+#observer:hover{filter:drop-shadow(0 0 30px rgba(38,255,164,.55))}
+/* 进入实验（stimulus stage）或结果页时隐藏，避免遮挡 */
+body.in-experiment #observer{opacity:0;pointer-events:none}
+@media (max-width:720px){#observer{display:none}}
+@media (prefers-reduced-motion:reduce){#observer{transition:none}}

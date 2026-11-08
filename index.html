@@ -82,6 +82,8 @@
   </div>
 </div>
 
+<canvas id="observer" title="观测者（点击眨眼）"></canvas>
+
 <div class="progress-shell" id="progress-shell" style="display:none"><div class="progress-bar" id="progress-bar"></div></div>
 <div class="progress-label" id="progress-label"></div>
 
@@ -157,7 +159,7 @@
   let W = 0, H = 0, DPR = 1;
   let pts = [];
   const focal = { x: -9999, y: -9999, r: 150, target: 150, pulse: 0 };
-  const N = 78;
+  const N = 150;                              // 更密集的星场
 
   function resize(){
     const box = cv.parentElement.getBoundingClientRect();
@@ -176,7 +178,7 @@
         y: Math.random() * H,
         vx: (Math.random() - .5) * 0.16,
         vy: (Math.random() - .5) * 0.16,
-        r: 0.8 + Math.random() * 1.5,
+        r: 1.4 + Math.random() * 2.6,          // 更大的颗粒
         h: Math.random() < .18 ? 'amb' : (Math.random() < .5 ? 'grn' : 'cyn'),
         tw: Math.random() * Math.PI * 2,          // 闪烁相位
         tws: 0.006 + Math.random() * 0.014,
@@ -304,7 +306,136 @@
   let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { resize(); seed(); }, 180); });
 })();
 
-/* 顶部时钟（像仪器一样走） */
+/* ============================================================
+   虚拟观测者（Observer）：跟随鼠标的小图标，眼睛追踪光标
+   ------------------------------------------------------------
+   位置：固定在视口右下，缓动追随鼠标；眼睛瞳孔朝鼠标方向偏移。
+   纯 canvas 绘制，无图片资源；点击时眨眼。
+   ============================================================ */
+(function(){
+  const cv = document.getElementById('observer');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DPR = Math.min(devicePixelRatio || 1, 2);
+  const SIZE = 96;
+  cv.width = SIZE * DPR; cv.height = SIZE * DPR;
+  cv.style.width = SIZE + 'px'; cv.style.height = SIZE + 'px';
+  ctx.scale(DPR, DPR);
+
+  // 图标在视口中的位置（右下角，避开边缘）
+  const W = 96, H = 96;
+  let px = innerWidth - W - 36, py = innerHeight - H - 36;
+  let vx = 0, vy = 0;
+  let gx = innerWidth - W - 36, gy = innerHeight - H - 36;   // 目标位置（跟随鼠标，带偏移）
+  let mx = innerWidth / 2, my = innerHeight / 2;             // 鼠标绝对坐标
+  let blink = 0, blinkT = 0, t = 0;
+
+  addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+
+  function loop(){
+    t += 0.016;
+
+    // ① 位置：跟随鼠标但保持一定距离（在鼠标左上方偏移），缓动
+    const offsetX = mx > innerWidth * 0.6 ? -140 : 140;
+    gx = clampNum(mx + offsetX - W / 2, 16, innerWidth - W - 16);
+    gy = clampNum(my + 60 - H / 2, 16, innerHeight - H - 16);
+    // 弹簧缓动
+    vx += (gx - px) * 0.055; vx *= 0.86;
+    vy += (gy - py) * 0.055; vy *= 0.86;
+    px += vx; py += vy;
+
+    // ② 眼睛瞳孔朝鼠标方向偏移
+    const cx = px + W / 2, cy = py + H / 2;
+    const dx = mx - cx, dy = my - cy;
+    const dist = Math.hypot(dx, dy) || 1;
+    const maxR = 5.2;
+    const ex = (dx / dist) * Math.min(dist / 26, 1) * maxR;
+    const ey = (dy / dist) * Math.min(dist / 26, 1) * maxR;
+
+    // ③ 眨眼节律
+    blinkT -= 0.016;
+    if (blinkT <= 0 && !reduce) { blink = 1; blinkT = 2.6 + Math.random() * 3.4; }
+    if (blink > 0) blink = Math.max(0, blink - 0.09);
+
+    ctx.clearRect(0, 0, W, H);
+
+    // 外发光
+    const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, 44);
+    halo.addColorStop(0, 'rgba(38,255,164,.20)');
+    halo.addColorStop(1, 'rgba(38,255,164,0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath(); ctx.arc(cx, cy, 44, 0, Math.PI * 2); ctx.fill();
+
+    // 头部（六边形，仪器感）
+    ctx.save();
+    ctx.beginPath();
+    const R = 27;
+    for (let i = 0; i < 6; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 3;
+      const x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.closePath();
+    const head = ctx.createLinearGradient(cx, cy - R, cx, cy + R);
+    head.addColorStop(0, 'rgba(22,30,40,.96)');
+    head.addColorStop(1, 'rgba(12,18,26,.96)');
+    ctx.fillStyle = head; ctx.fill();
+    ctx.strokeStyle = 'rgba(38,255,164,.72)'; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.restore();
+
+    // 眼睛（两眼）
+    const eyeY = cy - 2;
+    const eyeDX = 8.5;
+    const eyeR = 7;
+    const openH = eyeR * (1 - blink * 0.95);
+    [-1, 1].forEach(sign => {
+      const exC = cx + sign * eyeDX;
+      // 眼白
+      ctx.beginPath();
+      ctx.ellipse(exC, eyeY, eyeR, openH, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(238,248,252,.94)'; ctx.fill();
+      // 瞳孔
+      if (blink < 0.55) {
+        ctx.beginPath();
+        ctx.arc(exC + ex, eyeY + ey, 3.0, 0, Math.PI * 2);
+        ctx.fillStyle = '#0a1018'; ctx.fill();
+        // 高光
+        ctx.beginPath();
+        ctx.arc(exC + ex - 0.9, eyeY + ey - 1.0, 1.0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fill();
+      }
+    });
+
+    // 嘴（随 t 轻微起伏）
+    ctx.beginPath();
+    ctx.moveTo(cx - 4, cy + 11);
+    ctx.quadraticCurveTo(cx, cy + 13 + Math.sin(t * 1.6) * 0.8, cx + 4, cy + 11);
+    ctx.strokeStyle = 'rgba(38,255,164,.65)'; ctx.lineWidth = 1.4;
+    ctx.lineCap = 'round'; ctx.stroke();
+
+    // 天线 + 脉冲点
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - R);
+    ctx.lineTo(cx, cy - R - 7);
+    ctx.strokeStyle = 'rgba(38,255,164,.55)'; ctx.lineWidth = 1.2; ctx.stroke();
+    const pulse = 0.6 + 0.4 * Math.sin(t * 2.6);
+    ctx.beginPath();
+    ctx.arc(cx, cy - R - 9.5, 2.4, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(62,225,255,' + pulse.toFixed(2) + ')'; ctx.fill();
+
+    requestAnimationFrame(loop);
+  }
+
+  function clampNum(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+  // 点击图标：眨个眼
+  cv.addEventListener('click', () => { blink = 1; blinkT = 1.2; });
+  if (reduce) { /* 静态：只画一次 */ blink = 0; }
+  loop();
+})();
+
+/* 顶部时钟 */
 (function(){
   const el = document.getElementById('st-clock');
   if (!el) return;

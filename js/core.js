@@ -518,12 +518,14 @@ function buildConsentFlow(expName, extraConsentHTML = "") {
     </div>
     <div class="field">
       <label>你的匿名编号</label>
-      <div id="pid-row" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <code class="kbd" id="pid-show" style="font-size:14px;padding:6px 14px">—</code>
-        <button type="button" class="btn gray small" id="pid-switch" style="display:none">换一个编号（换人时用）</button>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <input type="text" id="pid-input" maxlength="32" placeholder="留空则自动生成"
+               style="width:190px;font-family:var(--mono);font-size:14px;letter-spacing:.04em">
+        <button type="button" class="btn gray small" id="pid-auto">自动生成</button>
       </div>
-      <p class="muted" id="pid-hint" style="margin-top:6px">
-        同一人做多个实验时请使用同一编号，系统会自动沿用。
+      <p class="muted" style="margin-top:6px">
+        同一人做多个实验请填<b>同一个编号</b>；换一个人做实验时请改掉它。
+        留空会生成一个不重复的编号。
       </p>
     </div>
     <div class="field">
@@ -543,33 +545,28 @@ function buildConsentFlow(expName, extraConsentHTML = "") {
 function bindConsentFlow(onStart) {
   const ok = $("#consent-ok"), btn = $("#btn-go");
 
-  // —— 编号显示与切换 ——
-  // 已有编号就直接展示；没有则先展示「待生成」，勾选同意后生成
-  const showPid = () => {
-    const el = $("#pid-show"), sw = $("#pid-switch"), hint = $("#pid-hint");
-    const saved = localStorage.getItem("alab_pid");
-    if (saved) {
-      if (el) el.textContent = saved;
-      if (sw) sw.style.display = "inline-block";
-      if (hint) hint.innerHTML = "已沿用本机上次的编号。若这是<b>另一个人</b>在做实验，请点「换一个编号」。";
-    } else {
-      if (el) el.textContent = "待生成";
-      if (sw) sw.style.display = "none";
-      if (hint) hint.innerHTML = "勾选同意并进入时会自动生成一个不重复的编号，同一人做多个实验会一直沿用。";
-    }
-  };
-  showPid();
-  const swBtn = $("#pid-switch");
-  if (swBtn) swBtn.addEventListener("click", () => {
-    if (!confirm("确认换一个编号？这通常用于「换另一个人」做实验。\n当前编号的记录不会被删除。")) return;
-    Session.switchPid();
-    showPid();
+  // —— 编号输入：预填本机已用编号，被试可直接改 ——
+  const pidInput = $("#pid-input");
+  const savedPid = localStorage.getItem("alab_pid");
+  if (pidInput && savedPid) pidInput.value = savedPid;
+
+  // 「自动生成」按钮：生成一个新编号填入输入框
+  const autoBtn = $("#pid-auto");
+  if (autoBtn) autoBtn.addEventListener("click", () => {
+    const pid = Session.genUniquePid();
+    Session.registerPid(pid);
+    if (pidInput) pidInput.value = pid;
   });
 
   ok.addEventListener("change", () => { btn.disabled = !ok.checked; });
   btn.addEventListener("click", async () => {
-    Session.init();
-    const pv = $("#pid-show"); if (pv) pv.textContent = Session.pid;
+    // 以输入框内容为准：留空则自动生成（保证不重复）
+    let pid = (pidInput && pidInput.value || "").trim();
+    if (!pid) { pid = Session.genUniquePid(); }
+    Session.registerPid(pid);
+    localStorage.setItem("alab_pid", pid);
+    Session.pid = pid;
+    Session.ts = new Date().toISOString();
     const mode = (document.querySelector('input[name=eye]:checked') || {}).value || "mouse";
     if (mode === "eye") {
       ensureWGOverlay();                       // 仅在开启眼动时才创建预览小窗等元素
@@ -607,3 +604,30 @@ const DECO_SVG = {
   tl: ``,
   br: ``,
 };
+
+/* ---------- 观测者图标：实验进行时自动隐藏 ----------
+   监听 #stage 的 display 变化（三个实验都用同一套显示/隐藏方式），
+   进入刺激画布时给 body 加 in-experiment，CSS 据此淡出图标。 */
+(function watchStage() {
+  const sync = () => {
+    const st = document.getElementById("stage");
+    const on = !!(st && st.classList.contains("on"));
+    document.body.classList.toggle("in-experiment", on);
+  };
+  const boot = () => {
+    sync();
+    const obs = new MutationObserver(sync);
+    const st = document.getElementById("stage");
+    if (st) obs.observe(st, { attributes: true, attributeFilter: ["class", "style"] });
+    else {
+      // stage 由各实验动态插入，等到它出现
+      const mo = new MutationObserver(() => {
+        const s2 = document.getElementById("stage");
+        if (s2) { mo.disconnect(); sync(); obs.observe(s2, { attributes: true, attributeFilter: ["class", "style"] }); }
+      });
+      mo.observe(document.body, { childList: true, subtree: true });
+    }
+  };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();

@@ -906,12 +906,22 @@ async function renderCMSection() {
 }
 
 /* ---------- AI 对决面板（离线预跑结果） ---------- */
+/** 读取 JSON 并剥离可能的 UTF-8 BOM（某些编辑器/脚本保存时会加 BOM，
+ *  浏览器 response.json() 遇 BOM 会抛错，故统一用 text → 清洗 → parse） */
+async function fetchJSONNoBOM(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status} — ${url}`);
+  const text = (await r.text()).replace(/^\uFEFF/, "");
+  try { return JSON.parse(text); }
+  catch (e) { throw new Error(`JSON 解析失败（${url}）：${e.message}`); }
+}
+
 async function renderAIPanel() {
   const box = $("#res-ai");
   try {
     const [res, prompts] = await Promise.all([
-      fetch("ai/ai_results.json").then(r => r.json()),
-      fetch("ai/cm_prompts.json").then(r => r.json()),
+      fetchJSONNoBOM("ai/ai_results.json"),
+      fetchJSONNoBOM("ai/cm_prompts.json"),
     ]);
     const byId = {};
     prompts.trials.forEach(tr => byId[tr.id] = tr);
@@ -964,7 +974,10 @@ async function renderAIPanel() {
       ylabel: "log₂ 误差", title: "图形比例知觉：人类 vs AI",
     });
   } catch (e) {
-    box.innerHTML = `<div class="callout warn">AI 结果文件（ai/ai_results.json）尚未创建或无法读取。</div>`;
+    box.innerHTML = `<div class="callout warn"><b>AI 对比面板加载失败</b><br>
+      原因：${String(e && e.message || e).replace(/[<>]/g, "")}<br>
+      <span class="muted">数据文件位于 <code>ai/ai_results.json</code> 与 <code>ai/cm_prompts.json</code>；
+      若用本地服务器打开请确认这两个文件存在且为合法 JSON。</span></div>`;
   }
 }
 

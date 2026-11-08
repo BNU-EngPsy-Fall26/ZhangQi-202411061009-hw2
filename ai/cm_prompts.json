@@ -1,4 +1,4 @@
-﻿{
+{
     "task":  "Cleveland \u0026 McGill (1984) 图形比例知觉估计 —— 多模态大模型同题作答（部分-整体比例版）",
     "note":  "每条 trial 对应一张图；将图片与 prompt 一起发给 LLM（prompt 按编码类型区分提问），把估计值（0-100 整数）填入 ai_results.json 的 results.estimate",
     "trials":  [
