@@ -394,30 +394,18 @@ function chart(canvas, cfg) {
 /* ---------- 全局数据 ---------- */
 const RES = { cm: [], flk: [], ib: [], pred: null, ai: null, class: null };
 
-/** 加载全班课堂数据：优先实时接口（课程「我的结果」页同源），失败回退本地快照。
- *  接口对应课程三个原始实验：inattention（专注计数）/ flanker（速测）/ cm（估一估）。 */
+/** 加载全班课堂数据。
+ *  /api/class/summary 未开放 CORS，故统一经 CLASSDATA 读取同源静态快照
+ *  （data/class_summary.json，随站点部署），缺失时才尝试实时接口。 */
 async function loadClassData() {
-  // ① 先用本地快照立即渲染（离线也能显示）
-  try {
-    const r = await fetch("data/class_summary.json", { cache: "no-store" });
-    const txt = (await r.text()).replace(/^\uFEFF/, "");
-    const j = JSON.parse(txt);
-    RES.class = (j && j.exps) ? j : null;
-  } catch (e) { RES.class = null; }
-
-  // ② 再尝试用实时接口刷新（拿到最新全班数据）
-  if (typeof CLASSDATA !== "undefined") {
-    try {
-      const ids = ["inattention", "flanker", "cm"];
-      const got = await Promise.all(ids.map(id => CLASSDATA.summary(id)));
-      if (got.some(g => g)) {
-        const exps = {};
-        ids.forEach((id, i) => { if (got[i]) exps[id] = got[i]; });
-        // 合并：实时数据优先，缺失的用快照补齐
-        RES.class = { source: CLASSDATA.LAB, exps: Object.assign({}, (RES.class && RES.class.exps) || {}, exps) };
-      }
-    } catch (e) { /* 静默：保留快照 */ }
-  }
+  if (typeof CLASSDATA === "undefined") { RES.class = null; return; }
+  const ids = ["inattention", "flanker", "cm"];
+  const got = await Promise.all(ids.map(id => CLASSDATA.summary(id)));
+  const exps = {};
+  ids.forEach((id, i) => { if (got[i]) exps[id] = got[i]; });
+  RES.class = Object.keys(exps).length
+    ? { source: "data/class_summary.json", fetched_at: CLASSDATA.snapshotAt || null, exps }
+    : null;
 }
 
 function ingest(rows) {

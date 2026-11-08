@@ -30,7 +30,7 @@ function miniChart(canvas, cfg) {
   ctx.clearRect(0, 0, W, H);
 
   const L = 46, R = 12, T = 34, B = 40;
-  const pw = W - L - R, ph = H - T - B;
+  const pw = Math.max(60, W - L - R), ph = Math.max(40, H - T - B);
   const ymin = cfg.ymin == null ? 0 : cfg.ymin;
   const ymax = cfg.ymax || 1;
   const y2p = v => T + ph - (v - ymin) / (ymax - ymin) * ph;
@@ -258,4 +258,17 @@ async function renderMyResult(expKey, trials, hostEl) {
       { name: "全班", color: "#3ee1ff", values: cmp.clsSeries },
     ],
   });
+  // 布局尚未完成时 clientWidth 可能为 0，下一帧重绘一次
+  setTimeout(() => {
+    const c2 = document.getElementById("mr-chart");
+    if (c2 && c2.clientWidth > 0) {
+      miniChart(c2, {
+        labels: cmp.labels, ymax: cmp.ymax, yfmt: cmp.yfmt,
+        series: [
+          { name: "我", color: "#26ffa4", values: cmp.mySeries },
+          { name: "全班", color: "#3ee1ff", values: cmp.clsSeries },
+        ],
+      });
+    }
+  }, 120);
 }
