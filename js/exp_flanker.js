@@ -289,6 +289,7 @@ async function flkFinish() {
       <a class="btn gray" href="../index.html">返回首页</a>
     </div>
   </div>`;
+  Collector.markDone("flanker");
   renderMyResult("flanker", t);
 }
 

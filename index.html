@@ -44,21 +44,31 @@
     </div>
   </div>
 
+  <!-- ========== 被试身份条（有编号时出现） ========== -->
+  <div class="idbar" id="idbar" style="display:none">
+    <div class="idbar-main">
+      <span class="idbar-label">SUBJECT ID</span>
+      <code class="idbar-pid" id="idbar-pid">—</code>
+      <span class="idbar-progress" id="idbar-progress"></span>
+    </div>
+    <button class="btn gray small" id="idbar-switch">换人</button>
+  </div>
+
   <!-- ========== 实验入口 ========== -->
   <div class="grid-exp">
-    <a class="exp-card" href="experiments/ib.html">
+    <a class="exp-card" href="experiments/ib.html" data-exp="ib">
       <div class="exp-head"><span class="idx">01</span><span>Inattentional Blindness</span></div>
       <h3>非注意盲</h3>
       <p class="desc">数着传球，一个东西穿过画面。你会看见它吗？<br>雨伞、金币鹅、枫叶鹅——它长什么样、跑多快，决定了答案。</p>
       <div class="foot"><span>6 ROUNDS · 3 MIN</span><span class="go">ENTER →</span></div>
     </a>
-    <a class="exp-card" href="experiments/flanker.html">
+    <a class="exp-card" href="experiments/flanker.html" data-exp="flanker">
       <div class="exp-head"><span class="idx">02</span><span>Emotional Flanker</span></div>
       <h3>情绪 Flanker</h3>
       <p class="desc">中间的箭头朝哪边？旁边那张愤怒的脸，会不会让判断变慢？</p>
       <div class="foot"><span>80 TRIALS · 8 MIN</span><span class="go">ENTER →</span></div>
     </a>
-    <a class="exp-card" href="experiments/cm.html">
+    <a class="exp-card" href="experiments/cm.html" data-exp="cm">
       <div class="exp-head"><span class="idx">03</span><span>Graphical Perception</span></div>
       <h3>图形比例估计</h3>
       <p class="desc">0.5 秒。猜一个百分比。<br>位置、长度、角度、面积——哪种图形撑得住时间压力？</p>
@@ -77,6 +87,56 @@
 
 <script src="js/config.js"></script>
 <script src="js/core.js"></script>
+<script>
+/* ============================================================
+   被试身份条：显示编号 + 已完成实验 + 换人
+   ------------------------------------------------------------
+   编号存 localStorage（跨三个实验复用），完成状态存 alab_done_<pid>。
+   ============================================================ */
+(function(){
+  const EXPS = { ib: "非注意盲", flanker: "情绪 Flanker", cm: "图形比例估计" };
+  const bar = document.getElementById("idbar");
+  const pidEl = document.getElementById("idbar-pid");
+  const progEl = document.getElementById("idbar-progress");
+  const swBtn = document.getElementById("idbar-switch");
+  if (!bar) return;
+
+  function doneList(pid) {
+    try { return JSON.parse(localStorage.getItem("alab_done_" + pid) || "[]"); }
+    catch (_) { return []; }
+  }
+
+  function render() {
+    const pid = localStorage.getItem("alab_pid");
+    if (!pid) { bar.style.display = "none"; return; }
+    bar.style.display = "flex";
+    pidEl.textContent = pid;
+    const done = doneList(pid);
+    // 三张卡片标记完成
+    Object.keys(EXPS).forEach(k => {
+      const card = document.querySelector(`.exp-card[data-exp="${k}"]`);
+      if (!card) return;
+      const isDone = done.includes(k);
+      card.classList.toggle("is-done", isDone);
+      const foot = card.querySelector(".foot .go");
+      if (foot) foot.textContent = isDone ? "再次进入 ↻" : "ENTER →";
+    });
+    progEl.innerHTML = done.length
+      ? `已完成 <b>${done.length}/3</b> · ${done.map(k => EXPS[k]).join(" / ")}`
+      : `尚未开始 · 三个实验可任意顺序`;
+  }
+
+  swBtn.addEventListener("click", () => {
+    if (!confirm("换一个编号？这通常用于「换另一个人」做实验。\n当前编号的记录不会被删除。")) return;
+    localStorage.removeItem("alab_pid");
+    render();
+  });
+
+  render();
+  // 从实验页返回时可能已更新，监听可见性变化
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+})();
+</script>
 <script>
 /* ============================================================
    首页 · 注意力场（Attention Field）

@@ -64,13 +64,76 @@ const Progress = {
 /* ---------- 会话（被试编号、知情同意、实验数据暂存） ---------- */
 const Session = {
   pid: null, useEye: false, ts: null,
-  /** 生成/读取匿名被试编号，如 P017 */
+  /** 读取/生成匿名被试编号（同一被试跨实验复用同一编号）
+   *  · 同一浏览器会话内：复用已保存的编号，不再询问
+   *  · 编号计数器用「时间戳 + 随机」组合，避免不同被试撞号
+   *  · 被试可手动输入自己的编号（跨设备延续同一身份） */
   init(prefix = "P") {
-    let n = +(localStorage.getItem("alab_pid_n") || 0) + 1;
-    localStorage.setItem("alab_pid_n", n);
-    this.pid = prompt("请输入被试匿名编号（直接回车则自动生成）：", "") || (prefix + String(n).padStart(3, "0"));
+    // ① 本机已有编号 → 直接复用（跨三个实验保持一致）
+    const saved = localStorage.getItem("alab_pid");
+    if (saved) {
+      this.pid = saved;
+      this.ts = new Date().toISOString();
+      return this.pid;
+    }
+    // ② 首次进入（或刚换人）→ 询问
+    const input = prompt(
+      "请输入你的匿名编号（如 P001）。\n" +
+      "同一人做多个实验请使用同一编号。\n" +
+      "直接回车则自动生成一个不重复的编号。", "");
+    let pid = (input || "").trim();
+    // ③ 留空 → 自动生成全局唯一编号
+    if (!pid) pid = this.genUniquePid(prefix);
+    this.registerPid(pid);
+    localStorage.setItem("alab_pid", pid);
+    this.pid = pid;
     this.ts = new Date().toISOString();
     return this.pid;
+  },
+
+  /** 生成全局唯一编号：时间戳后 6 位 + 3 位随机 + 冲突重试
+   *  （单次调用内用单调计数器兜底，保证同毫秒批量生成也不撞） */
+  genUniquePid(prefix = "P") {
+    const used = this.usedPids();
+    const usedSet = new Set(used);
+    // 单调计数器：存在 localStorage 里，跨调用递增，杜绝同毫秒撞号
+    let seq = +(localStorage.getItem("alab_pid_seq") || 0);
+    for (let i = 0; i < 500; i++) {
+      seq++;
+      const ts = String(Date.now()).slice(-6);
+      const s = String(seq % 1000).padStart(3, "0");
+      const rnd = String(Math.floor(Math.random() * 100)).padStart(2, "0");
+      const pid = prefix + ts + s + rnd;
+      if (!usedSet.has(pid)) {
+        localStorage.setItem("alab_pid_seq", String(seq));
+        return pid;
+      }
+    }
+    localStorage.setItem("alab_pid_seq", String(seq));
+    return prefix + Date.now() + String(seq);
+  },
+
+  /** 读取本机记录的已用编号 */
+  usedPids() {
+    try { return JSON.parse(localStorage.getItem("alab_pid_used") || "[]"); }
+    catch (_) { return []; }
+  },
+
+  /** 登记编号（去重） */
+  registerPid(pid) {
+    const used = this.usedPids();
+    if (!used.includes(pid)) {
+      used.push(pid);
+      localStorage.setItem("alab_pid_used", JSON.stringify(used.slice(-200)));
+    }
+    // 同时维护递增计数，便于人工核对编号总量
+    localStorage.setItem("alab_pid_n", String(used.length));
+  },
+
+  /** 切换/重置编号（被试换人时用） */
+  switchPid() {
+    localStorage.removeItem("alab_pid");
+    this.pid = null;
   },
 };
 
@@ -85,6 +148,13 @@ const Collector = {
   },
   push(trial) { trial.pid = Session.pid; this.trials.push(trial); },
   pushGaze(g) { this.gazeSummary.push(g); },
+  /** 标记当前被试完成了某个实验（供首页显示进度） */
+  markDone(expKey) {
+    const key = "alab_done_" + Session.pid;
+    let done = [];
+    try { done = JSON.parse(localStorage.getItem(key) || "[]"); } catch (_) { }
+    if (!done.includes(expKey)) { done.push(expKey); localStorage.setItem(key, JSON.stringify(done)); }
+  },
   /** 导出 CSV（收数接口不可用时的兜底） */
   exportCSV(extraCols = {}) {
     if (!this.trials.length) return;
@@ -447,6 +517,16 @@ function buildConsentFlow(expName, extraConsentHTML = "") {
       </div>
     </div>
     <div class="field">
+      <label>你的匿名编号</label>
+      <div id="pid-row" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <code class="kbd" id="pid-show" style="font-size:14px;padding:6px 14px">—</code>
+        <button type="button" class="btn gray small" id="pid-switch" style="display:none">换一个编号（换人时用）</button>
+      </div>
+      <p class="muted" id="pid-hint" style="margin-top:6px">
+        同一人做多个实验时请使用同一编号，系统会自动沿用。
+      </p>
+    </div>
+    <div class="field">
       <label>注意落点记录方式（可选）</label>
       <div class="radio-row" style="flex-direction:column;gap:10px;align-items:flex-start">
         <label><input type="radio" name="eye" value="eye" checked> <span><b>摄像头眼动</b> —— 精度更高；视频在浏览器本地处理，<b>不会</b>上传或保存</span></label>
@@ -462,9 +542,34 @@ function buildConsentFlow(expName, extraConsentHTML = "") {
 }
 function bindConsentFlow(onStart) {
   const ok = $("#consent-ok"), btn = $("#btn-go");
+
+  // —— 编号显示与切换 ——
+  // 已有编号就直接展示；没有则先展示「待生成」，勾选同意后生成
+  const showPid = () => {
+    const el = $("#pid-show"), sw = $("#pid-switch"), hint = $("#pid-hint");
+    const saved = localStorage.getItem("alab_pid");
+    if (saved) {
+      if (el) el.textContent = saved;
+      if (sw) sw.style.display = "inline-block";
+      if (hint) hint.innerHTML = "已沿用本机上次的编号。若这是<b>另一个人</b>在做实验，请点「换一个编号」。";
+    } else {
+      if (el) el.textContent = "待生成";
+      if (sw) sw.style.display = "none";
+      if (hint) hint.innerHTML = "勾选同意并进入时会自动生成一个不重复的编号，同一人做多个实验会一直沿用。";
+    }
+  };
+  showPid();
+  const swBtn = $("#pid-switch");
+  if (swBtn) swBtn.addEventListener("click", () => {
+    if (!confirm("确认换一个编号？这通常用于「换另一个人」做实验。\n当前编号的记录不会被删除。")) return;
+    Session.switchPid();
+    showPid();
+  });
+
   ok.addEventListener("change", () => { btn.disabled = !ok.checked; });
   btn.addEventListener("click", async () => {
     Session.init();
+    const pv = $("#pid-show"); if (pv) pv.textContent = Session.pid;
     const mode = (document.querySelector('input[name=eye]:checked') || {}).value || "mouse";
     if (mode === "eye") {
       ensureWGOverlay();                       // 仅在开启眼动时才创建预览小窗等元素

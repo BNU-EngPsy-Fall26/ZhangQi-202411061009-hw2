@@ -493,6 +493,7 @@ async function ibFinish() {
     </div>
   </div>`;
   // 渲染「我的结果 + 全班对比」
+  Collector.markDone("ib");
   renderMyResult("ib", trials);
 }
 

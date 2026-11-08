@@ -188,6 +188,7 @@ async function finish() {
       <a class="btn gray" href="../index.html">返回首页</a>
     </div>
   </div>`;
+  Collector.markDone("cm");
   renderMyResult("cm", Collector.trials);
 }
 
