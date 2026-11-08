@@ -200,15 +200,21 @@ function cochranQ(dataBySubject) {
   const Q = (k - 1) * (k * C.reduce((s, v) => s + v * v, 0) - T * T) / denom;
   return { Q, df: k - 1, p: gammq((k - 1) / 2, Q / 2) };
 }
-const pFmt = p => (p == null || isNaN(p)) ? "—" : (p < 0.001 ? "&lt;.001" : p.toFixed(3));
+const pFmt = p => (p == null || isNaN(p)) ? "—" : (p < 0.001 ? "< .001" : (p >= 0.999 ? "= .999" : "= " + p.toFixed(3).replace(/^0/, "")));
+/** 数字格式化：APA 惯例，去掉前导 0（如 .35） */
+const numFmt = (v, d = 2) => (v == null || isNaN(v)) ? "—" : v.toFixed(d).replace(/^(-?)0\./, "$1.");
+/** 统计报告表（APA 第 7 版中文期刊格式：统计量斜体、p 值去前导零） */
 function statBox(title, rows, note) {
   if (!rows.length) return "";
-  return `<div class="chart-box"><h3>${title}</h3>
-    <table class="table"><tr><th>检验</th><th>统计量</th><th>p</th><th>效应量</th></tr>
-    ${rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("")}
+  return `<div class="chart-box apa-stat"><h3>${title}</h3>
+    <table class="table apa-table">
+      <tr><th>检验</th><th>统计结果</th><th>p</th><th>效应量</th></tr>
+      ${rows.map(r => `<tr><td>${r[0]}</td><td class="mono">${r[1]}</td><td class="mono">${r[2]}</td><td class="mono">${r[3]}</td></tr>`).join("")}
     </table>
-    <p class="muted">p 值口径：t 检验为单侧（方向性预测收数前预登记，双侧 p = ×2）；Fisher 精确检验为双侧；卡方 / Friedman / Cochran's Q 为上尾概率。</p>
-    ${note ? `<p class="muted">${note}</p>` : ""}</div>`;
+    <p class="muted apa-note">注：<i>p</i> 值为单侧检验（方向性预测于收数前预登记，双侧 <i>p</i> = ×2）；Fisher 精确检验报告双侧 <i>p</i>；
+      卡方、Cochran's <i>Q</i>、Friedman 检验报告上尾概率。效应量 <i>d</i><sub>z</sub> 为配对设计 Cohen's <i>d</i>，
+      <i>V</i> 为 Cramér's <i>V</i>，<i>W</i> 为 Kendall's <i>W</i>。</p>
+    ${note ? `<p class="muted apa-note">${note}</p>` : ""}</div>`;
 }
 
 /* ---------- 手绘图表（无外部依赖） ---------- */
@@ -224,33 +230,43 @@ function chart(canvas, cfg) {
   canvas.style.height = H + "px";
   const ctx = canvas.getContext("2d"); ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, W, H);
-  // —— 头部布局：标题行（y≈15）与图例行（y≈36）分层，绘图区从 T 起 ——
-  //   （旧版标题与图例同画在 (L, 15/16)，文字完全重叠形成「重影」）
+  // —— 头部布局：标题 / 图例 / 绘图区严格分层，各留 6px 呼吸 ——
   const hasTitle = !!cfg.title;
   const hasLegend = cfg.series.length > 0;
-  const T = hasTitle ? (hasLegend ? 54 : 32) : (hasLegend ? 34 : 8);
-  const L = 48, R = 12, B = 44;
+  const TITLE_Y = 15;                              // 标题基线
+  const LEG_Y = hasTitle ? 38 : 17;                // 图例基线
+  // 数值标签需要约 14px 空间，故绘图区顶部再下移
+  const T = (hasTitle ? (hasLegend ? 54 : 34) : (hasLegend ? 36 : 10)) + 14;
+  const L = 52, R = 14, B = 46;                    // 左侧留宽以容纳 y 轴刻度
   const pw = W - L - R, ph = H - T - B;
   const font = "11.5px 'JetBrains Mono', ui-monospace, monospace";
   ctx.font = font; ctx.fillStyle = "#1e293b"; ctx.strokeStyle = "#dde5ec";
   if (hasTitle) {
     ctx.font = "500 11.5px 'JetBrains Mono', ui-monospace, monospace";
-    ctx.textAlign = "left"; ctx.fillText(cfg.title, L, 15);
+    ctx.textAlign = "left";
+    // 标题过长时截断，避免溢出画布
+    let t = cfg.title;
+    const maxW = W - L - R;
+    while (ctx.measureText(t).width > maxW && t.length > 6) t = t.slice(0, -2);
+    ctx.fillText(t === cfg.title ? t : t + "…", L, TITLE_Y);
     ctx.font = font;
   }
   if (hasLegend) {
-    const legY = hasTitle ? 37 : 16;
     ctx.font = "10.5px 'JetBrains Mono', ui-monospace, monospace";
     const itemW = cfg.series.map(s => (cfg.type === "bar" ? 14 : 24) + ctx.measureText(s.name).width + 8);
     const totalW = itemW.reduce((a, b) => a + b, 0);
     const avail = W - L - R;
+    // 若图例总宽超出可用宽度，按比例压缩间距（可能换行）
     const gap = itemW.length > 1 ? Math.max(2, (avail - totalW) / (itemW.length - 1)) : 0;
-    let lx = L;
+    let lx = L, row = 0;
     cfg.series.forEach((s, i) => {
-      if (cfg.type === "bar") { ctx.fillStyle = s.color; ctx.fillRect(lx, legY - 9, 10, 10); }
-      else { ctx.strokeStyle = s.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(lx, legY - 4); ctx.lineTo(lx + 18, legY - 4); ctx.stroke(); }
+      // 超出右边界则换行
+      if (lx + itemW[i] > W - R + 1 && i > 0) { lx = L; row++; }
+      const ly = LEG_Y + row * 15;
+      if (cfg.type === "bar") { ctx.fillStyle = s.color; ctx.fillRect(lx, ly - 8, 9, 9); }
+      else { ctx.strokeStyle = s.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(lx, ly - 4); ctx.lineTo(lx + 18, ly - 4); ctx.stroke(); }
       ctx.fillStyle = "#64748b"; ctx.textAlign = "left";
-      ctx.fillText(s.name, lx + (cfg.type === "bar" ? 14 : 24), legY);
+      ctx.fillText(s.name, lx + (cfg.type === "bar" ? 13 : 24), ly);
       lx += itemW[i] + gap;
     });
     ctx.font = font; ctx.textAlign = "center";
@@ -301,9 +317,14 @@ function chart(canvas, cfg) {
       pts.forEach((p, i) => {
         if (!p) return;
         const lab = +p.v.toFixed(cfg.yfmt === 1 ? 0 : 2);
-        const yLab = (s.errs && s.errs[i]) ? Math.max(y2p(p.v + s.errs[i]), T) - 5 : Math.min(y2p(p.v), T + ph) - 5;
-        ctx.fillStyle = "#1e293b"; ctx.font = "10.5px 'JetBrains Mono', ui-monospace, monospace";
-        ctx.fillText(lab, p.x, Math.max(yLab, T + 8));
+        // 数值标签：置于误差条上端之上 4px；若会超出绘图区顶部，则改为画在柱内顶部
+        const errTop = (s.errs && s.errs[i]) ? Math.max(y2p(p.v + s.errs[i]), T) : Math.min(y2p(p.v), T + ph);
+        let yLab = errTop - 5;
+        const inside = yLab < T + 9;                 // 太靠上 → 画到柱内
+        if (inside) yLab = errTop + 12;
+        ctx.fillStyle = inside ? "#ffffff" : "#1e293b";
+        ctx.font = "10.5px 'JetBrains Mono', ui-monospace, monospace";
+        ctx.fillText(lab, p.x, yLab);
         ctx.font = font;
       });
     });
@@ -347,9 +368,24 @@ function chart(canvas, cfg) {
   });
   ctx.fillStyle = "#1e293b";
   (cfg.xlabels || []).forEach((t, i) => {
-    const x = cfg.type === "bar" ? L + (pw / cfg.xlabels.length) * i + pw / cfg.xlabels.length / 2
-      : L + pw * (i / Math.max(1, cfg.xlabels.length - 1));
-    ctx.fillText(t, x, H - 24);
+    const nLab = cfg.xlabels.length;
+    const step = cfg.type === "bar" ? pw / nLab : pw / Math.max(1, nLab - 1);
+    const x = cfg.type === "bar" ? L + step * i + step / 2 : L + step * i;
+    // 标签自适应：按可用槽宽截断，必要时分两行，绝不横向重叠
+    const maxW = Math.max(28, step - 6);
+    let label = String(t);
+    if (ctx.measureText(label).width > maxW) {
+      // 先尝试把长标签拆两行（如「中性·一致」→「中性」「一致」）
+      const parts = label.split(/[·\s]+/).filter(Boolean);
+      if (parts.length > 1 && parts.every(p => ctx.measureText(p).width <= maxW)) {
+        parts.forEach((p, k) => ctx.fillText(p, x, H - 30 + k * 12));
+        return;
+      }
+      // 否则截断加省略号
+      while (ctx.measureText(label + "…").width > maxW && label.length > 2) label = label.slice(0, -1);
+      label += "…";
+    }
+    ctx.fillText(label, x, H - 22);
   });
   // 标题已在头部区域绘制（与图例分层，不再重叠）
   if (cfg.ylabel) { ctx.save(); ctx.translate(12, T + ph / 2); ctx.rotate(-Math.PI / 2); ctx.fillStyle = "#64748b"; ctx.fillText(cfg.ylabel, 0, 0); ctx.restore(); }
@@ -906,23 +942,46 @@ async function renderCMSection() {
 }
 
 /* ---------- AI 对决面板（离线预跑结果） ---------- */
-/** 读取 JSON 并剥离可能的 UTF-8 BOM（某些编辑器/脚本保存时会加 BOM，
- *  浏览器 response.json() 遇 BOM 会抛错，故统一用 text → 清洗 → parse） */
-async function fetchJSONNoBOM(url) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`HTTP ${r.status} — ${url}`);
-  const text = (await r.text()).replace(/^\uFEFF/, "");
-  try { return JSON.parse(text); }
-  catch (e) { throw new Error(`JSON 解析失败（${url}）：${e.message}`); }
+/** 读取 JSON：剥 BOM + 缓存禁用 + 失败重试一次
+ *  （BOM 会让 response.json() 抛错；某些环境 fetch 会因缓存/网络抖动失败） */
+async function fetchJSONNoBOM(url, retry = 1) {
+  let lastErr;
+  for (let i = 0; i <= retry; i++) {
+    try {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const text = (await r.text()).replace(/^\uFEFF/, "");
+      return JSON.parse(text);
+    } catch (e) {
+      lastErr = e;
+      if (i < retry) await new Promise(s => setTimeout(s, 350));
+    }
+  }
+  throw new Error(`${url} 读取失败：${lastErr && lastErr.message}`);
 }
 
 async function renderAIPanel() {
   const box = $("#res-ai");
+  let res = null, prompts = null, usedFallback = false;
   try {
-    const [res, prompts] = await Promise.all([
+    [res, prompts] = await Promise.all([
       fetchJSONNoBOM("ai/ai_results.json"),
       fetchJSONNoBOM("ai/cm_prompts.json"),
     ]);
+  } catch (e) {
+    // 回退到内置数据（保证面板始终可用）
+    if (typeof AI_FALLBACK !== "undefined") {
+      res = AI_FALLBACK.results;
+      prompts = AI_FALLBACK.prompts;
+      usedFallback = true;
+    } else {
+      box.innerHTML = `<div class="callout warn"><b>AI 对比面板加载失败</b><br>
+        原因：${String(e && e.message || e).replace(/[<>]/g, "")}<br>
+        <span class="muted">数据文件位于 <code>ai/ai_results.json</code> 与 <code>ai/cm_prompts.json</code>。</span></div>`;
+      return;
+    }
+  }
+  try {
     const byId = {};
     prompts.trials.forEach(tr => byId[tr.id] = tr);
     const done = (res.results || []).filter(r => r.estimate != null && byId[r.id]);
@@ -973,11 +1032,17 @@ async function renderAIPanel() {
       ],
       ylabel: "log₂ 误差", title: "图形比例知觉：人类 vs AI",
     });
+    // 使用内置兜底数据时加一句提示
+    if (usedFallback) {
+      const tip = document.createElement("p");
+      tip.className = "muted";
+      tip.style.marginTop = "8px";
+      tip.textContent = "（注：外部数据文件读取失败，当前显示的是内置备份数据，内容与文件一致）";
+      box.appendChild(tip);
+    }
   } catch (e) {
-    box.innerHTML = `<div class="callout warn"><b>AI 对比面板加载失败</b><br>
-      原因：${String(e && e.message || e).replace(/[<>]/g, "")}<br>
-      <span class="muted">数据文件位于 <code>ai/ai_results.json</code> 与 <code>ai/cm_prompts.json</code>；
-      若用本地服务器打开请确认这两个文件存在且为合法 JSON。</span></div>`;
+    box.innerHTML = `<div class="callout warn"><b>AI 面板渲染失败</b><br>
+      原因：${String(e && e.message || e).replace(/[<>]/g, "")}</div>`;
   }
 }
 
@@ -1132,7 +1197,20 @@ function reportIB(crit) {
     ? { s: mean(seen), m: mean(missed), w: wG } : null;
   const html = `
     <h3 style="margin:10px 0 6px">实验 1 · 非注意盲（N = ${pids.length}，每人 6 轮）</h3>
-    <table class="table">
+    <div class="apa-prose">
+      <p>为检验意外刺激的运动速度、形象类别与轮次对察觉的影响，对 ${pids.length} 名被试的
+      ${crit.length} 个关键试次进行 Cochran's <i>Q</i> 检验。速度条件的察觉率分别为
+      快速 ${pct(rS[0])}、慢速 ${pct(rS[1])}、静止 ${pct(rS[2])}${qS ? `，差异${qS.p < .05 ? "显著" : "不显著"}，
+      Cochran's <i>Q</i>(${qS.df}) = ${numFmt(qS.Q)}，<i>p</i> ${pFmt(qS.p)}` : ""}。
+      形象条件的察觉率分别为金币鹅 ${pct(rI[1])}、枫叶鹅 ${pct(rI[2])}、雨伞 ${pct(rI[0])}${qI ? `，
+      Cochran's <i>Q</i>(${qI.df}) = ${numFmt(qI.Q)}，<i>p</i> ${pFmt(qI.p)}` : ""}。</p>
+      <p>轮次效应方面，第 1 轮察觉率为 ${pct(rR[0])}，第 6 轮为 ${pct(rR[5])}${qR ? `，
+      Cochran's <i>Q</i>(${qR.df}) = ${numFmt(qR.Q)}，<i>p</i> ${pFmt(qR.p)}` : ""}。
+      ${gaze ? `以注视接触率为指标，察觉试次（<i>M</i> = ${numFmt(gaze.s * 100, 1)}%）与未察觉试次
+      （<i>M</i> = ${numFmt(gaze.m * 100, 1)}%）${gaze.w ? `的差异${gaze.w.p1 < .05 ? "显著" : "不显著"}，
+      <i>t</i>(${numFmt(gaze.w.df, 1)}) = ${numFmt(gaze.w.t)}，<i>p</i> ${pFmt(gaze.w.p1)}` : "未作检验"}。` : ""}</p>
+    </div>
+    <table class="table apa-table">
       <tr><th>预注册预测</th><th>实测</th><th>判定</th></tr>
       <tr><td>1. 速度：快速 &gt; 慢速 ≈ 静止</td>
           <td>快速 ${pct(rS[0])} / 慢速 ${pct(rS[1])} / 静止 ${pct(rS[2])}；Cochran's Q(2) = ${qS ? qS.Q.toFixed(2) : "—"}，${pv(qS && qS.p)}</td><td>${V[vS]}</td></tr>
@@ -1186,7 +1264,19 @@ function reportFLK(t) {
   else if (inter != null && inter <= -10) hypo = "方向符合注意收缩（增量 &lt; 0）但未达显著";
   const html = `
     <h3 style="margin:10px 0 6px">实验 2 · 情绪 Flanker（N = ${m.pids.length}）</h3>
-    <table class="table">
+    <div class="apa-prose">
+      <p>以侧翼面孔的情绪价效与箭头一致性为被试内因素，对 ${m.pids.length} 名被试的反应时进行配对样本 <i>t</i> 检验。
+      中性侧翼与愤怒侧翼条件下的冲突量（不一致减一致）分别为
+      <i>M</i> = ${m.costN == null ? "—" : numFmt(m.costN, 1)} ms 与 <i>M</i> = ${m.costA == null ? "—" : numFmt(m.costA, 1)} ms，
+      情绪干扰增量为 ${inter == null ? "—" : (inter > 0 ? "+" : "") + numFmt(inter, 1)} ms${emo
+        ? `，${emo.p1 < .05 ? "差异显著" : "差异不显著"}，<i>t</i>(${emo.df}) = ${numFmt(emo.t)}，<i>p</i> ${pFmt(emo.p1)}，
+      Cohen's <i>d</i><sub>z</sub> = ${numFmt(emo.dz)}` : ""}。</p>
+      <p>${flk ? `经典 Flanker 效应（不一致减一致）为 <i>M</i> = ${numFmt(flk.mDiff, 1)} ms，
+      <i>t</i>(${flk.df}) = ${numFmt(flk.t)}，<i>p</i> ${pFmt(flk.p1)}，<i>d</i><sub>z</sub> = ${numFmt(flk.dz)}，
+      ${flk.mDiff >= 20 && flk.mDiff <= 60 ? "落在 Eriksen 与 Eriksen（1974）报告的 20–60 ms 区间内" : "偏离文献报告的 20–60 ms 区间"}。` : ""}
+      综合上述结果，本实验数据支持<strong>${hypo.replace(/&amp;/g, "&").replace(/（.*?）/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">")}</strong>。</p>
+    </div>
+    <table class="table apa-table">
       <tr><th>预注册预测（三假说竞争）</th><th>实测</th><th>判定</th></tr>
       <tr><td>1. 威胁捕获假说：愤怒冲突量 &gt; 中性（预期增量 +5~20ms）</td>
           <td>中性 ${m.costN == null ? "—" : m.costN.toFixed(0) + "ms"} / 愤怒 ${m.costA == null ? "—" : m.costA.toFixed(0) + "ms"}；
@@ -1251,8 +1341,19 @@ function reportCM(t) {
   const vH = verdictOf(ordMatch, fr && fr.p);
   const vX = itx ? verdictOf(itx.mDiff > 0, itx.p1) : "n";
   const html = `
-    <h3 style="margin:10px 0 6px">实验 3 · C&M 图形知觉（N = ${pids.length}）</h3>
-    <table class="table">
+    <h3 style="margin:10px 0 6px">实验 3 · C&amp;M 图形知觉（N = ${pids.length}）</h3>
+    <div class="apa-prose">
+      <p>对 ${pids.length} 名被试在四种图形编码下的 log₂ 估计误差进行 Friedman 检验。
+      实测误差由小至大为：${ord.length ? ord.join(" &lt; ") : "—"}${fr
+        ? `，编码主效应${fr.p < .05 ? "显著" : "不显著"}，χ²(${fr.df}) = ${numFmt(fr.chi2)}，
+      <i>p</i> ${pFmt(fr.p)}，Kendall's <i>W</i> = ${numFmt(fr.W)}` : ""}。</p>
+      <p>${itx ? `就编码与呈现时长的交互而言，角度与面积编码在 500 ms 条件下的误差增量比位置与长度编码高
+      ${numFmt(itx.mDiff)} log₂ 单位，<i>t</i>(${itx.df}) = ${numFmt(itx.t)}，<i>p</i> ${pFmt(itx.p1)}，
+      Cohen's <i>d</i><sub>z</sub> = ${numFmt(itx.dz)}，
+      ${itx.mDiff > 0 ? "支持自动性假说（层级源于自动知觉编码）" : "支持短呈现反转假说（需认知计算）"}。`
+        : "被试内数据不足，无法检验交互效应。"}</p>
+    </div>
+    <table class="table apa-table">
       <tr><th>预注册预测</th><th>实测</th><th>判定</th></tr>
       <tr><td>1. 复现层级：位置 &lt; 长度 &lt; 角度 &lt; 面积（log₂ 误差）</td>
           <td>实测顺序：${ord.join(" &lt; ") || "—"}；${fr ? `Friedman χ²(${fr.df}) = ${fr.chi2.toFixed(2)}，${pv(fr.p)}，W = ${fr.W.toFixed(2)}` : "被试内数据不足"}</td><td>${V[vH]}</td></tr>

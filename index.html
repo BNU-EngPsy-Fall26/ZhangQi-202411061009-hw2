@@ -336,18 +336,20 @@
   function loop(){
     t += 0.016;
 
-    // ① 位置：跟随鼠标但保持一定距离（在鼠标左上方偏移），缓动
+    // ① 位置：跟随鼠标但保持距离，弹簧缓动
     const offsetX = mx > innerWidth * 0.6 ? -140 : 140;
     gx = clampNum(mx + offsetX - W / 2, 16, innerWidth - W - 16);
     gy = clampNum(my + 60 - H / 2, 16, innerHeight - H - 16);
-    // 弹簧缓动
     vx += (gx - px) * 0.055; vx *= 0.86;
     vy += (gy - py) * 0.055; vy *= 0.86;
     px += vx; py += vy;
 
-    // ② 眼睛瞳孔朝鼠标方向偏移
-    const cx = px + W / 2, cy = py + H / 2;
-    const dx = mx - cx, dy = my - cy;
+    // ★ 关键：把 canvas 元素本身移到 px,py（内部坐标系是 0~96 的局部坐标）
+    cv.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0)`;
+
+    // ② 眼睛瞳孔朝鼠标方向偏移（用视口绝对坐标计算方向）
+    const cx = W / 2, cy = H / 2;                 // 局部坐标系中心
+    const dx = mx - (px + cx), dy = my - (py + cy);
     const dist = Math.hypot(dx, dy) || 1;
     const maxR = 5.2;
     const ex = (dx / dist) * Math.min(dist / 26, 1) * maxR;
