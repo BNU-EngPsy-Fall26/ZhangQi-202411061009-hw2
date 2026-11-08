@@ -73,7 +73,7 @@ function runTrial(trial) {
       // 短时/中时：到点立即随机噪点掩蔽 300ms，再出现滑块
       setTimeout(() => {
         curCMOffT = performance.now();
-        gazeWin = WG.enabled ? WG.window(curCMOnT, curCMOffT) : [];
+        gazeWin = GZ.enabled ? GZ.window(curCMOnT, curCMOffT) : [];
         drawMask(ctx);
         setTimeout(() => {
           canvasEl().style.visibility = "hidden";
@@ -93,7 +93,7 @@ function submitResponse() {
   const rt = performance.now() - curCMT0;
   if (curCMTrial.dur === Infinity) {
     curCMOffT = performance.now();
-    gazeWin = WG.enabled ? WG.window(curCMOnT, curCMOffT) : [];
+    gazeWin = GZ.enabled ? GZ.window(curCMOnT, curCMOffT) : [];
   }
   const errs = cmErrors(v, curCMTrial.ratio);
   // 仅正式试次进入收数（练习试次不上传、不导出，避免与正式数据混淆）
@@ -105,7 +105,7 @@ function submitResponse() {
       est: v, truePct: +(curCMTrial.ratio * 100).toFixed(0),
       log2err: +errs.log2err.toFixed(4), absErr: +errs.absErr.toFixed(2),
       rt: Math.round(rt),
-      gazeN: gazeWin.length,
+      gazeN: gazeWin.length, gazeSrc: GZ.source,
       phase: EXP.phase,
     });
   }
@@ -165,7 +165,7 @@ async function finish() {
   stageEl().classList.remove("on");
   Progress.set(1, "完成");
   const sub = await Collector.submit();
-  WG.stop();
+  GZ.stop();
   const byEnc = {};
   Collector.trials.forEach(t => { (byEnc[t.enc] = byEnc[t.enc] || []).push(t.log2err); });
   const encRows = CM_ENCODINGS.map(e =>
@@ -177,6 +177,7 @@ async function finish() {
     <p>被试编号 <b>${Session.pid}</b> · 有效试次 <b>${Collector.trials.length}</b> ·
        数据上传：<b class="${sub.ok ? "badge ok" : "badge err"}">${sub.ok ? ("成功" + (sub.warnings ? "（服务器清洗提示：" + (Array.isArray(sub.warnings) ? sub.warnings.join("；") : sub.warnings) + "）" : "")) : "失败（" + (sub.reason || sub.status) + "）"}</b></p>
     ${sub.ok ? "" : `<p class="muted">上传失败时请点击下方导出 CSV，发给实验者即可。</p>`}
+    <div id="my-result"></div>
     <div class="chart-box"><h3>你的各编码平均对数误差（越小越准）</h3>
       <table class="table"><tr><th>编码</th><th>log₂ 误差</th><th>试次数</th></tr>${encRows}</table>
       <p class="muted">完整分析（含编码×时长交互检验、与 C&M 1984 及多模态大模型对比）见
@@ -187,6 +188,7 @@ async function finish() {
       <a class="btn gray" href="../index.html">返回首页</a>
     </div>
   </div>`;
+  renderMyResult("cm", Collector.trials);
 }
 
 /* ---------- 启动 ---------- */

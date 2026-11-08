@@ -341,6 +341,83 @@ function calibChoiceModal(errPx, grade, rounds) {
   });
 }
 
+/* ---------- 鼠标定位追踪（眼动不可用时的兜底方案） ----------
+   接口与 WG 完全一致（buffer / window / contactRate / enabled / stop），
+   因此实验代码无需分辨数据来源。记录鼠标位置作为「注意落点」的代理指标：
+   鼠标轨迹反映被试主动指向的位置，可用于与刺激区域的接触率分析。
+   --------------------------------------------------------------- */
+const MG = {
+  ready: false, enabled: false, buffer: [], handler: null, lastT: 0,
+  /** 启动鼠标追踪：全局监听 mousemove / touchmove，按 ~30Hz 采样 */
+  async init() {
+    this.buffer = [];
+    this.handler = (e) => {
+      const now = performance.now();
+      if (now - this.lastT < 33) return;            // ~30Hz，与眼动对齐
+      this.lastT = now;
+      this.buffer.push({ x: e.clientX, y: e.clientY, t: now });
+      if (this.buffer.length > 12000) this.buffer.splice(0, 4000);
+    };
+    window.addEventListener("mousemove", this.handler, { passive: true });
+    window.addEventListener("touchmove", this.handler, { passive: true });
+    this.ready = true; this.enabled = true;
+    return true;
+  },
+  /** 抓取 [t0,t1] 窗口内的采样点 */
+  window(t0, t1) {
+    return this.buffer.filter(g => g.t >= t0 && g.t <= t1).map(g => ({ x: g.x, y: g.y }));
+  },
+  /** 落点落入某屏内矩形邻近区域的比例（与 WG.contactRate 同口径） */
+  contactRate(samples, rect, margin = 120) {
+    if (!samples || !samples.length) return null;
+    const hit = samples.filter(s => s.x > rect.x - margin && s.x < rect.x + rect.w + margin &&
+                                    s.y > rect.y - margin && s.y < rect.y + rect.h + margin);
+    return hit.length / samples.length;
+  },
+  stop() {
+    if (this.handler) {
+      window.removeEventListener("mousemove", this.handler);
+      window.removeEventListener("touchmove", this.handler);
+      this.handler = null;
+    }
+    this.enabled = false;
+  },
+};
+
+/* ---------- 统一「注意落点」追踪器 ----------
+   实验代码只与 GZ 交互，由 GZ 决定数据来自摄像头眼动还是鼠标。
+   两者都提供 { enabled, window(), contactRate(), stop() }。 */
+const GZ = {
+  mode: "none",                    // "eye" | "mouse" | "none"
+  get enabled() { return WG.enabled || MG.enabled; },
+  get source() { return WG.enabled ? "eye" : (MG.enabled ? "mouse" : "none"); },
+  /** 启动指定模式；eye 失败时自动降级为 mouse */
+  async start(mode) {
+    if (mode === "eye") {
+      const ok = await WG.init();
+      if (ok) { this.mode = "eye"; return "eye"; }
+    }
+    const ok = await MG.init();
+    this.mode = ok ? "mouse" : "none";
+    return this.mode;
+  },
+  /** 取窗口内采样（自动路由到当前激活的追踪器） */
+  window(t0, t1) {
+    if (WG.enabled) return WG.window(t0, t1);
+    if (MG.enabled) return MG.window(t0, t1);
+    return [];
+  },
+  contactRate(samples, rect, margin) {
+    if (WG.enabled) return WG.contactRate(samples, rect, margin);
+    if (MG.enabled) return MG.contactRate(samples, rect, margin);
+    return null;
+  },
+  stop() {
+    if (WG.enabled) WG.stop();
+    if (MG.enabled) MG.stop();
+  },
+};
+
 /* ---------- 眼动开关 + 摄像头小窗 ---------- */
 function ensureWGOverlay() {
   if ($("#wg-video")) return;
@@ -370,12 +447,13 @@ function buildConsentFlow(expName, extraConsentHTML = "") {
       </div>
     </div>
     <div class="field">
-      <label>摄像头眼动（可选）</label>
-      <div class="radio-row">
-        <label><input type="radio" name="eye" value="1" checked> 开启摄像头眼动（视频在浏览器本地处理，<b>不会</b>上传或保存）</label>
-        <label><input type="radio" name="eye" value="0"> 不开启，仅行为数据</label>
+      <label>注意落点记录方式（可选）</label>
+      <div class="radio-row" style="flex-direction:column;gap:10px;align-items:flex-start">
+        <label><input type="radio" name="eye" value="eye" checked> <span><b>摄像头眼动</b> —— 精度更高；视频在浏览器本地处理，<b>不会</b>上传或保存</span></label>
+        <label><input type="radio" name="eye" value="mouse"> <span><b>鼠标追踪</b> —— 不用摄像头，用鼠标移动位置作为注意落点的近似（不影响任何实验流程）</span></label>
+        <label><input type="radio" name="eye" value="none"> <span><b>都不记录</b> —— 仅采集按键与作答数据</span></label>
       </div>
-      <p class="muted">如摄像头不可用，实验将自动跳过眼动。</p>
+      <p class="muted">摄像头不可用时会自动切换到鼠标追踪，实验照常进行。</p>
     </div>
     <div class="btn-row">
       <button class="btn" id="btn-go" disabled>进入实验</button>
@@ -387,8 +465,8 @@ function bindConsentFlow(onStart) {
   ok.addEventListener("change", () => { btn.disabled = !ok.checked; });
   btn.addEventListener("click", async () => {
     Session.init();
-    const useEye = document.querySelector('input[name=eye]:checked').value === "1";
-    if (useEye) {
+    const mode = (document.querySelector('input[name=eye]:checked') || {}).value || "mouse";
+    if (mode === "eye") {
       ensureWGOverlay();                       // 仅在开启眼动时才创建预览小窗等元素
       btn.disabled = true; btn.textContent = "正在启动摄像头…";
       const started = await WG.init();
@@ -397,10 +475,23 @@ function bindConsentFlow(onStart) {
         // 9 点点击训练 → 5 点注视验证 → 误差报告（被试可见）→ 通过/重校/仅行为 由被试自选
         const cal = await WG.calibFlow();
         Collector.calib = cal;                 // 校准质量（误差 px、轮数、是否启用）随数据上传
-        if (!cal.ok) alert("已切换为仅行为数据模式，实验不受影响。");
+        if (!cal.ok) {
+          // 眼动失败 → 自动降级为鼠标追踪（而不是完全放弃落点数据）
+          await MG.init();
+          Collector.calib = Object.assign({}, cal, { fallback: "mouse" });
+          alert("眼动未通过校准，已自动切换到鼠标追踪模式，实验不受影响。");
+        }
       } else {
-        alert("已切换为仅行为数据模式，实验不受影响。");
+        await MG.init();
+        Collector.calib = { ok: false, fallback: "mouse" };
+        alert("摄像头不可用，已切换到鼠标追踪模式，实验不受影响。");
       }
+    } else if (mode === "mouse") {
+      btn.disabled = true; btn.textContent = "正在启动鼠标追踪…";
+      await MG.init();
+      Collector.calib = { ok: null, mode: "mouse" };
+    } else {
+      Collector.calib = { ok: null, mode: "none" };
     }
     onStart();
   });

@@ -270,8 +270,8 @@ function runSegment(plan, onDone) {
         correctQuad = (q.x < IB.W / 2 ? "左" : "右") + (q.y < IB.H / 2 ? "上" : "下");
         visMs = gazeMark.off ? Math.round(gazeMark.off - gazeMark.on) : null;
       }
-      if (plan && WG.enabled && gazeMark.on && gazeMark.off) {
-        const samples = WG.window(gazeMark.on, gazeMark.off);
+      if (plan && GZ.enabled && gazeMark.on && gazeMark.off) {
+        const samples = GZ.window(gazeMark.on, gazeMark.off);
         gazeN = samples.length;
         if (gazeN) {
           const r = canvas.getBoundingClientRect();
@@ -400,7 +400,7 @@ async function segmentAndAsk(phase, segNo, segTotal, plan) {
     fcQuad: fc.fcQuad || "", fcQuadCorr: fc.fcQuad ? (fc.fcQuad === d.correctQuad ? 1 : 0) : null,
     fcDir: fc.fcDir || "", fcDirCorr: fc.fcDir ? (fc.fcDir === d.correctDir ? 1 : 0) : null,
     stimVisMs: d.visMs,
-    gazeN: d.gazeN, contact: d.contact,
+    gazeN: d.gazeN, contact: d.contact, gazeSrc: GZ.source,
   });
 }
 
@@ -448,7 +448,7 @@ async function ibFinish() {
   $("#stage").classList.remove("on");
   Progress.set(1, "完成");
   const sub = await Collector.submit();
-  WG.stop();
+  GZ.stop();
   const trials = Collector.trials.filter(t => t.phase === "critical");
   const noticedN = trials.filter(t => t.noticed === 1).length;
   $("#app").style.display = "block";
@@ -474,6 +474,7 @@ async function ibFinish() {
         ${["umb", "coin", "maple"].map(k => { const a = trials.filter(t => t.stim === k);
           return `<tr><td>${IB.stimCN[k]}</td><td>${a.length}</td><td>${a.length ? (a.filter(t => t.noticed).length / a.length * 100).toFixed(0) + "%" : "—"}</td></tr>`; }).join("")}
       </table></div>
+    <div id="my-result"></div>
     <div class="callout"><b>实验解密（事后说明）</b><br>
       在每一段正式动画中，都出现了一个<b>不属于两队球员的物体</b>——可能是
       一把白色雨伞、一只手持金币的鹅、或一只胸口戴枫叶徽章的鹅。
@@ -491,6 +492,8 @@ async function ibFinish() {
       <a class="btn gray" href="../index.html">返回首页</a>
     </div>
   </div>`;
+  // 渲染「我的结果 + 全班对比」
+  renderMyResult("ib", trials);
 }
 
 /* ---------- 启动 ---------- */

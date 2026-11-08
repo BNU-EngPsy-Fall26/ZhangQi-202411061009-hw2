@@ -153,7 +153,7 @@ function respond(key) {
   const rt = performance.now() - curT0;
   const offT = performance.now();
   const correct = key === curTrial.key ? 1 : 0;
-  const gaze = WG.enabled ? WG.window(curOnT, offT) : [];
+  const gaze = GZ.enabled ? GZ.window(curOnT, offT) : [];
   // 眼动 ROI：侧翼区域（左右各两格）vs 中央目标区域
   let gazeF = null;
   if (gaze.length) {
@@ -171,7 +171,7 @@ function respond(key) {
     rt: Math.round(rt), correct,
     timeout: key === null ? 1 : 0,
     gazeFlankerRatio: gazeF === null ? null : +gazeF.toFixed(3),
-    gazeN: gaze.length, phase: FLK_STATE.phase,
+    gazeN: gaze.length, gazeSrc: GZ.source, phase: FLK_STATE.phase,
   };
   if (FLK_STATE.phase === "practice") FLK_STATE.pracResults.push(rec);
   else Collector.push(rec);
@@ -259,7 +259,7 @@ async function flkFinish() {
   flkStage().classList.remove("on");
   Progress.set(1, "完成");
   const sub = await Collector.submit();
-  WG.stop();
+  GZ.stop();
   const t = Collector.trials;
   const acc = mean(t.map(x => x.correct));
   const rtOk = t.filter(x => x.correct);
@@ -283,11 +283,13 @@ async function flkFinish() {
       <p class="muted">你的情绪干扰量 = 愤怒侧翼冲突 − 中性侧翼冲突 = ${cost("angry") - cost("neutral")} ms。
       完整分析与「冷注意 vs 情绪捕获」模型对比见 <a href="../results.html">结果页</a>。</p>
     </div>
+    <div id="my-result"></div>
     <div class="btn-row">
       <button class="btn ghost" onclick="Collector.exportCSV()">导出 CSV（上传失败时用）</button>
       <a class="btn gray" href="../index.html">返回首页</a>
     </div>
   </div>`;
+  renderMyResult("flanker", t);
 }
 
 /* ---------- 启动 ---------- */

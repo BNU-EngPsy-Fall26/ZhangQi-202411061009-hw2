@@ -576,3 +576,15 @@ hr{border:none;border-top:1px solid var(--line);margin:26px 0}
   *,*::before,*::after{animation:none!important;transition:none!important}
   body::after{display:none}
 }
+
+/* ---------- 被试个人结果页（我的结果 + 全班对比） ---------- */
+.myresult{margin:22px 0 8px;padding:20px 22px;border:1px solid var(--line-2);border-radius:4px;background:rgba(255,255,255,.03)}
+.myresult-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.myresult-head h2{font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);margin:0;display:flex;align-items:center;gap:9px}
+.myresult-head h2::before{content:'';width:3px;height:14px;background:var(--grn);box-shadow:0 0 10px var(--grn-dim)}
+.myresult .kpi-row{margin:0 0 16px}
+.myresult .chart-box{background:rgba(255,255,255,.028);border:1px solid var(--line);border-radius:3px;padding:16px 18px;margin:0;box-shadow:none}
+.myresult .chart-box h3{color:var(--ink-2);font-size:10.5px;letter-spacing:.14em}
+.myresult .chart-box .muted{color:var(--ink-3);font-size:11.5px;line-height:1.7}
+.myresult canvas{display:block;max-width:100%}
+@media (max-width:720px){.myresult{padding:16px 14px}.myresult-head{flex-direction:column;align-items:flex-start;gap:8px}}
