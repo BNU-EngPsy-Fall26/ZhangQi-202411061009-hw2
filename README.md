@@ -1,7 +1,7 @@
 # 注意实验室 · 工程心理学作业 2
 
 > 🌐 **在线实验（被试点链接即可参与）**
-> <https://bnu-engpsy-fall26.github.io/ZhangQi202411061009--2/>
+> <https://bnu-engpsy-fall26.github.io/ZhangQi-202411061009-hw2/>
 > [实验 1 · 非注意盲](https://bnu-engpsy-fall26.github.io/ZhangQi202411061009--2/experiments/ib.html) ·
 > [实验 2 · 情绪 Flanker](https://bnu-engpsy-fall26.github.io/ZhangQi202411061009--2/experiments/flanker.html) ·
 > [实验 3 · 图形比例估计](https://bnu-engpsy-fall26.github.io/ZhangQi202411061009--2/experiments/cm.html) ·
